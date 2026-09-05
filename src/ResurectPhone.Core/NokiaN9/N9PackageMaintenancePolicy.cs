@@ -8,7 +8,8 @@ public sealed record N9DebPackageMetadata(
     string Architecture,
     string Essential = "",
     string Priority = "",
-    string AegisOrigin = "");
+    string AegisOrigin = "",
+    bool IsUserVisible = false);
 
 public enum N9DebRestoreConfidence
 {
@@ -47,6 +48,8 @@ public static partial class N9PackageMaintenancePolicy
             return "L’identifiant du paquet est invalide.";
         if (metadata.Package.Equals(CompanionPackage, StringComparison.Ordinal))
             return "Le compagnon ResurectPhone est nécessaire pour gérer le Nokia N9.";
+        if (!metadata.IsUserVisible)
+            return "Ce paquet n’a pas été identifié comme une application visible et ne peut pas être supprimé depuis ResurectPhone.";
         if (metadata.Essential.Trim().Equals("yes", StringComparison.OrdinalIgnoreCase))
             return "Ce paquet est déclaré essentiel par Harmattan.";
         if (metadata.Priority.Trim().Equals("required", StringComparison.OrdinalIgnoreCase) ||

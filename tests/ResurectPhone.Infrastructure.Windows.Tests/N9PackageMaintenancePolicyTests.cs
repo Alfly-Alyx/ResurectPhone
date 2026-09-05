@@ -16,7 +16,8 @@ public sealed class N9PackageMaintenancePolicyTests
         string priority,
         bool expected)
     {
-        var metadata = new N9DebPackageMetadata("twitter-qml", "1.0", "armel", essential, priority);
+        var metadata = new N9DebPackageMetadata(
+            "twitter-qml", "1.0", "armel", essential, priority, IsUserVisible: true);
 
         Assert.Equal(expected, N9PackageMaintenancePolicy.IsProtectedPackage(metadata));
     }
@@ -24,7 +25,8 @@ public sealed class N9PackageMaintenancePolicyTests
     [Fact]
     public void MetaPackageDependency_DoesNotBlockExpertRemovalByItself()
     {
-        var metadata = new N9DebPackageMetadata("twitter-qml", "1.0", "armel", "no", "optional");
+        var metadata = new N9DebPackageMetadata(
+            "twitter-qml", "1.0", "armel", "no", "optional", IsUserVisible: true);
 
         var command = N9PackageCommands.BuildExpertRemovalCommand(metadata, expertForceConfirmed: true);
 
@@ -42,6 +44,18 @@ public sealed class N9PackageMaintenancePolicyTests
         Assert.True(N9PackageMaintenancePolicy.IsProtectedPackage(metadata));
         Assert.Throws<InvalidOperationException>(() =>
             N9PackageCommands.BuildStandardRemovalCommand(metadata));
+    }
+
+    [Fact]
+    public void PackageNotListedAsAVisibleApplication_CannotBeRemoved()
+    {
+        var metadata = new N9DebPackageMetadata(
+            "background-service", "1.0", "armel", "no", "optional", IsUserVisible: false);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            N9PackageCommands.BuildExpertRemovalCommand(metadata, expertForceConfirmed: true));
+
+        Assert.Contains("application visible", exception.Message);
     }
 
     [Fact]

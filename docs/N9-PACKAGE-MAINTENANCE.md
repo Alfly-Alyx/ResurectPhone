@@ -4,9 +4,10 @@
 
 Ces règles proviennent d’essais effectués sur un Nokia N9 réel sous Harmattan.
 Elles sont des contraintes de conception de ResurectPhone, pas de simples pistes.
-Les actions d’installation, de sauvegarde et de suppression restent désactivées
-dans l’interface tant que leur cycle complet n’a pas été validé sur une
-application tierce supprimable.
+Un cycle complet d’installation et de suppression a été validé sur une
+application tierce jetable. Les actions restent désactivées dans l’interface
+tant que leur orchestration complète, les confirmations et le rapport de fin
+n’y sont pas encore reliés.
 
 ## Suppression d’une application
 
@@ -20,7 +21,8 @@ proposée dans le mode Expert, avec un avertissement et une confirmation
 distincts. La commande de repli validée est
 `dpkg --force-depends --remove <paquet>`.
 
-La suppression forcée reste interdite pour :
+Une suppression n’est proposée que pour un paquet associé à une application
+réellement visible dans l’inventaire du téléphone. Elle reste interdite pour :
 
 - tout paquet `Essential: yes` ;
 - les priorités `required` et `important` ;
@@ -89,6 +91,14 @@ Elle ne deviendra restaurable qu’après l’un des contrôles suivants :
   tierce non protégée ;
 - préservation ou récupération démontrée des métadonnées Aegis d’origine.
 
+Cette limite ne bloque pas l’installation d’un nouveau paquet. Un cycle réel a
+été validé avec `androlink-install-smoke`, version `0.8.12`, architecture
+`all` : installation réussie, état `install ok installed` et fichier installé
+vérifiés, puis désinstallation et absence finale du paquet confirmées. La
+capacité d’installer et de supprimer un `.deb` tiers valide est donc acquise ;
+le cas restant est le remplacement ou la restauration d’un paquet déjà installé
+et protégé par une origine Aegis différente.
+
 ## Dépôts observés sur le téléphone de test
 
 ResurectPhone doit aussi contrôler
@@ -103,3 +113,5 @@ deb http://coderus.openrepos.net/n9mirro/ ./
 Avant toute modification, le fichier existant devra être sauvegardé. Ces URLs
 seront vérifiées en ligne au moment où la réparation des dépôts sera activée ;
 leur simple présence dans ce document ne constitue pas une garantie permanente.
+Les paquets embarqués par ResurectPhone restent prioritaires. Une dépendance
+absente ou inaccessible doit être signalée séparément d’un refus Aegis.
