@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>ResurectPhone.App</RootNamespace>
+    <AssemblyName>ResurectPhone</AssemblyName>
+    <Description>Remise en service de téléphones et de leurs services essentiels</Description>
+    <ApplicationIcon>Assets\ResurectPhone.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ResurectPhone.Core\ResurectPhone.Core.csproj" />
+    <ProjectReference Include="..\ResurectPhone.Infrastructure.Windows\ResurectPhone.Infrastructure.Windows.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\ResurectPhone.png" />
+    <None Include="Assets\ResurectPhone.svg" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,381 @@
+<Window x:Class="ResurectPhone.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ResurectPhone" Width="1280" Height="720" MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow"
+        ResizeMode="CanResize" ShowInTaskbar="True">
+    <Window.Resources>
+        <Style x:Key="NavList" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+        <Style x:Key="NavItem" TargetType="ListBoxItem">
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Margin" Value="5,1" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="NavBorder" Background="Transparent"
+                                CornerRadius="{StaticResource ControlCornerRadius}">
+                            <Grid>
+                                <Border x:Name="Accent" Width="3" Height="16"
+                                        Background="{StaticResource AccentBrush}"
+                                        HorizontalAlignment="Left" Visibility="Collapsed" />
+                                <ContentPresenter Margin="{TemplateBinding Padding}"
+                                                  VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="NavBorder" Property="Background"
+                                        Value="{StaticResource SubtleFillHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="NavBorder" Property="Background"
+                                        Value="{StaticResource SubtleFillBrush}" />
+                                <Setter TargetName="Accent" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="HomeCardButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="CardBorder" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{StaticResource CardCornerRadius}">
+                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CardBorder" Property="Background" Value="{StaticResource SurfaceSecondaryBrush}" />
+                                <Setter TargetName="CardBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="CardBorder" Property="Opacity" Value="0.82" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <DataTemplate x:Key="TextNavigationIcon">
+            <TextBlock Text="{Binding Glyph}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                       FontSize="17" VerticalAlignment="Center" />
+        </DataTemplate>
+        <Style x:Key="Windows10NavigationIconStroke" TargetType="Path">
+            <Setter Property="Stroke" Value="{StaticResource TextBrush}" />
+            <Setter Property="StrokeThickness" Value="1.35" />
+            <Setter Property="Fill" Value="Transparent" />
+            <Setter Property="StrokeStartLineCap" Value="Round" />
+            <Setter Property="StrokeEndLineCap" Value="Round" />
+            <Setter Property="StrokeLineJoin" Value="Round" />
+        </Style>
+        <DataTemplate x:Key="AndroidNavigationIcon">
+            <Viewbox Width="18" Height="18" HorizontalAlignment="Left" VerticalAlignment="Center"
+                     SnapsToDevicePixels="True">
+                <Canvas Width="24" Height="24">
+                    <Path Style="{StaticResource Windows10NavigationIconStroke}"
+                          Data="M8.2,5.4 L6.8,3.1 M15.8,5.4 L17.2,3.1 M5.6,9.5 C5.6,6.7 8.5,4.7 12,4.7 C15.5,4.7 18.4,6.7 18.4,9.5 M5.6,10.8 L18.4,10.8 L18.4,16.8 C18.4,17.5 17.8,18.1 17.1,18.1 L6.9,18.1 C6.2,18.1 5.6,17.5 5.6,16.8 Z M3,11.1 L3,16.7 M21,11.1 L21,16.7 M8.7,18.1 L8.7,21.2 M15.3,18.1 L15.3,21.2" />
+                    <Ellipse Canvas.Left="8.45" Canvas.Top="7.15" Width="1.1" Height="1.1"
+                             Fill="{StaticResource TextBrush}" />
+                    <Ellipse Canvas.Left="14.45" Canvas.Top="7.15" Width="1.1" Height="1.1"
+                             Fill="{StaticResource TextBrush}" />
+                </Canvas>
+            </Viewbox>
+        </DataTemplate>
+        <DataTemplate x:Key="WindowsPhoneNavigationIcon">
+            <Viewbox Width="18" Height="18" HorizontalAlignment="Left" VerticalAlignment="Center"
+                     SnapsToDevicePixels="True">
+                <Canvas Width="24" Height="24">
+                    <Path Style="{StaticResource Windows10NavigationIconStroke}"
+                          Data="M7.2,1.8 L16.8,1.8 C18,1.8 19,2.8 19,4 L19,20 C19,21.2 18,22.2 16.8,22.2 L7.2,22.2 C6,22.2 5,21.2 5,20 L5,4 C5,2.8 6,1.8 7.2,1.8 Z" />
+                    <Path Fill="{StaticResource TextBrush}"
+                          Data="M7.8,7.2 L11.3,6.7 L11.3,10.3 L7.8,10.3 Z M12.2,6.6 L16.2,6 L16.2,10.3 L12.2,10.3 Z M7.8,11.2 L11.3,11.2 L11.3,14.8 L7.8,14.3 Z M12.2,11.2 L16.2,11.2 L16.2,15.5 L12.2,14.9 Z" />
+                </Canvas>
+            </Viewbox>
+        </DataTemplate>
+        <DataTemplate x:Key="WindowsInternalsNavigationIcon">
+            <Viewbox Width="18" Height="18" HorizontalAlignment="Left" VerticalAlignment="Center"
+                     SnapsToDevicePixels="True">
+                <Canvas Width="24" Height="24">
+                    <Path Style="{StaticResource Windows10NavigationIconStroke}"
+                          Data="M9,3 L22,4.8 L18.5,20.5 L2,16.4 L4.2,8.1 Z M9,3 L9.8,18.3 M3.6,9.9 L20.5,11.1" />
+                </Canvas>
+            </Viewbox>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource WindowBrush}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0" Background="{StaticResource NavigationPaneBrush}" Margin="4,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="82" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Orientation="Horizontal" Margin="16,8,10,8" VerticalAlignment="Center">
+                <Border Width="40" Height="40" CornerRadius="8" Background="{StaticResource AccentBrush}">
+                    <Viewbox Margin="5">
+                        <Canvas Width="32" Height="32">
+                            <Path Data="M12,5 L20,5 C21.1,5 22,5.9 22,7 L22,25 C22,26.1 21.1,27 20,27 L12,27 C10.9,27 10,26.1 10,25 L10,7 C10,5.9 10.9,5 12,5 Z"
+                                  Stroke="White" StrokeThickness="2.2" Fill="Transparent" />
+                            <Path Data="M5,15 C5.8,8.8 11.5,4.2 18,4.8 M18,2 L22,5 L18,8"
+                                  Stroke="White" StrokeThickness="2.2" StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round" StrokeLineJoin="Round" Fill="Transparent" />
+                            <Path Data="M27,17 C26.2,23.2 20.5,27.8 14,27.2 M14,30 L10,27 L14,24"
+                                  Stroke="White" StrokeThickness="2.2" StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round" StrokeLineJoin="Round" Fill="Transparent" />
+                        </Canvas>
+                    </Viewbox>
+                </Border>
+                <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="ResurectPhone" FontSize="18" FontWeight="SemiBold" />
+                    <TextBlock Text="Remettre un téléphone en service" FontSize="11.5"
+                               Foreground="{StaticResource MutedTextBrush}" />
+                </StackPanel>
+            </StackPanel>
+
+            <Border Grid.Row="1" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1"
+                    Padding="16,11" Margin="0,0,0,5" Background="{StaticResource SurfaceSecondaryBrush}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsFamilyView}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <TextBlock Text="{Binding ConnectionTitle}" FontWeight="SemiBold"
+                               FontSize="12" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding ConnectionDetail}" Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="11" Margin="0,3,0,0" MaxHeight="34" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </Border>
+
+            <ListBox Grid.Row="2" ItemsSource="{Binding Sections}"
+                     SelectedItem="{Binding SelectedSection, Mode=TwoWay}"
+                     Style="{StaticResource NavList}" ItemContainerStyle="{StaticResource NavItem}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <ContentControl Content="{Binding}" Width="36" VerticalAlignment="Center">
+                                <ContentControl.Style>
+                                    <Style TargetType="ContentControl">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource TextNavigationIcon}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Key}" Value="windows-phone.home">
+                                                <Setter Property="ContentTemplate" Value="{StaticResource WindowsPhoneNavigationIcon}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Key}" Value="windows-phone.internals">
+                                                <Setter Property="ContentTemplate" Value="{StaticResource WindowsInternalsNavigationIcon}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Key}" Value="windows-phone.android">
+                                                <Setter Property="ContentTemplate" Value="{StaticResource AndroidNavigationIcon}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ContentControl.Style>
+                            </ContentControl>
+                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+
+        <Border Grid.Column="1" Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                CornerRadius="{StaticResource CardCornerRadius}" Margin="0,8,8,8" ClipToBounds="True">
+            <Grid>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsHome}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ScrollViewer.Style>
+                <StackPanel Margin="46,42,46,46" MaxWidth="980">
+                    <TextBlock Text="Bienvenue dans ResurectPhone" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="Quel téléphone souhaitez-vous remettre en service ?"
+                               Style="{StaticResource PageSubtitle}" />
+
+                    <UniformGrid Columns="2" Margin="0,12,0,0">
+                        <Button Command="{Binding OpenWindowsPhoneCommand}"
+                                Style="{StaticResource HomeCardButton}" Margin="0,0,10,0" MinHeight="320">
+                            <Grid Margin="28">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Border Width="58" Height="58" CornerRadius="12"
+                                        Background="{StaticResource SelectionFillBrush}" HorizontalAlignment="Left">
+                                    <TextBlock Text="&#xE8A7;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                               Foreground="{StaticResource AccentBrush}" FontSize="28"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Grid.Row="1" Text="Windows Phone" FontSize="24" FontWeight="SemiBold"
+                                           Margin="0,22,0,8" />
+                                <StackPanel Grid.Row="2">
+                                    <TextBlock Text="Outils avancés pour les appareils Windows Phone compatibles."
+                                               Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,14" />
+                                    <TextBlock Text="Windows Internals  ·  Android  ·  Appareil"
+                                               Foreground="{StaticResource MutedTextBrush}" FontSize="12" />
+                                </StackPanel>
+                                <TextBlock Grid.Row="3" Text="Ouvrir Windows Phone  →"
+                                           Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"
+                                           Margin="0,24,0,0" />
+                            </Grid>
+                        </Button>
+
+                        <Button Command="{Binding OpenN9Command}"
+                                Style="{StaticResource HomeCardButton}" Margin="10,0,0,0" MinHeight="320">
+                            <Grid Margin="28">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Border Width="58" Height="58" CornerRadius="12"
+                                        Background="{StaticResource SelectionFillBrush}" HorizontalAlignment="Left">
+                                    <TextBlock Text="&#xE8EA;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                               Foreground="{StaticResource AccentBrush}" FontSize="28"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Grid.Row="1" Text="Nokia N9" FontSize="24" FontWeight="SemiBold"
+                                           Margin="0,22,0,8" />
+                                <StackPanel Grid.Row="2">
+                                    <TextBlock Text="Restaurer Harmattan et les services essentiels du Nokia N9."
+                                               Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,14" />
+                                    <TextBlock Text="ROM  ·  Boutiques  ·  Internet  ·  GPS"
+                                               Foreground="{StaticResource MutedTextBrush}" FontSize="12" />
+                                </StackPanel>
+                                <TextBlock Grid.Row="3" Text="Ouvrir Nokia N9  →"
+                                           Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"
+                                           Margin="0,24,0,0" />
+                            </Grid>
+                        </Button>
+                    </UniformGrid>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsFamilyView}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ScrollViewer.Style>
+                <StackPanel Margin="36,28,36,40">
+                    <TextBlock Text="{Binding SelectedFamilyTitle}" Foreground="{StaticResource AccentBrush}"
+                               FontSize="12" FontWeight="SemiBold" Margin="0,0,0,5" />
+                    <TextBlock Text="{Binding PageTitle}" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="{Binding PageSubtitle}" Style="{StaticResource PageSubtitle}" />
+
+                    <Border Style="{StaticResource Card}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="48" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="36" Height="36" CornerRadius="18"
+                                    Background="{StaticResource SelectionFillBrush}" VerticalAlignment="Top">
+                                <TextBlock Text="&#xE8EA;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           Foreground="{StaticResource AccentBrush}" FontSize="18"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="2,0,18,0">
+                                <TextBlock Text="{Binding ConnectionTitle}" FontSize="16" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding ConnectionDetail}" Margin="0,5,0,0"
+                                           Foreground="{StaticResource MutedTextBrush}" />
+                            </StackPanel>
+                            <Button Grid.Column="2" Content="{Binding ScanButtonText}"
+                                    Command="{Binding ScanCommand}" Style="{StaticResource PrimaryButton}"
+                                    VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Text="{Binding FeaturesTitle}" Style="{StaticResource SectionTitle}" />
+                    <ItemsControl ItemsSource="{Binding SelectedFeatures}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="2" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource Card}" Margin="0,0,12,12">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold"
+                                                       Margin="0,0,12,0" />
+                                            <Border Grid.Column="1" Background="{StaticResource SelectionFillBrush}"
+                                                    CornerRadius="{StaticResource ControlCornerRadius}" Padding="8,3">
+                                                <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource AccentBrush}"
+                                                           FontSize="11" FontWeight="SemiBold" />
+                                            </Border>
+                                        </Grid>
+                                        <TextBlock Grid.Row="1" Text="{Binding Description}" Margin="0,10,0,16"
+                                                   Foreground="{StaticResource MutedTextBrush}" />
+                                        <Grid Grid.Row="2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding RiskText}" FontSize="11"
+                                                       Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" />
+                                            <Button Grid.Column="1" Content="{Binding ActionText}" IsEnabled="{Binding IsAvailable}" />
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

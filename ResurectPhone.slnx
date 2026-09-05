@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ResurectPhone.App/ResurectPhone.App.csproj" />
+    <Project Path="src/ResurectPhone.Core/ResurectPhone.Core.csproj" />
+    <Project Path="src/ResurectPhone.Infrastructure.Windows/ResurectPhone.Infrastructure.Windows.csproj" />
+  </Folder>
+</Solution>
