@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using ResurectPhone.Core.Devices;
 using ResurectPhone.Core.Discovery;
+using ResurectPhone.Core.NokiaN9;
 using ResurectPhone.Core.Recovery;
 
 namespace ResurectPhone.App.Presentation;
@@ -16,6 +17,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         new HashSet<PhonePlatform> { PhonePlatform.WindowsPhone, PhonePlatform.Windows10Mobile };
 
     private readonly IPhoneDiscoveryService _discovery;
+    private readonly IN9ConnectionService _n9Connection;
+    private readonly IN9PairingInteraction _n9PairingInteraction;
     private readonly NavigationSectionViewModel _homeSection;
     private readonly IReadOnlyList<NavigationSectionViewModel> _n9Sections;
     private readonly IReadOnlyList<NavigationSectionViewModel> _windowsPhoneSections;
@@ -25,10 +28,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string _connectionTitle = "Aucun téléphone détecté";
     private string _connectionDetail = "Branchez un Nokia N9 ou un Windows Phone en USB.";
     private bool _isScanning;
+    private bool _isConnectingN9;
 
-    public MainWindowViewModel(IPhoneDiscoveryService discovery)
+    public MainWindowViewModel(
+        IPhoneDiscoveryService discovery,
+        IN9ConnectionService n9Connection,
+        IN9PairingInteraction n9PairingInteraction)
     {
         _discovery = discovery;
+        _n9Connection = n9Connection;
+        _n9PairingInteraction = n9PairingInteraction;
         _homeSection = new(
             "home", string.Empty, "\uE80F", "Accueil",
             "Choisissez le téléphone à remettre en service.", null,
@@ -58,6 +67,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OpenN9Command = new RelayCommand(() => OpenFamily(_n9Sections));
         OpenWindowsPhoneCommand = new RelayCommand(() => OpenFamily(_windowsPhoneSections));
         ScanCommand = new AsyncRelayCommand(ScanAsync, () => !IsScanning);
+        ConnectN9Command = new AsyncRelayCommand(ConnectN9Async, () => !IsConnectingN9);
+        ForgetN9PairingCommand = new RelayCommand(ForgetN9Pairing, () => CanForgetN9Pairing);
         RefreshFeatures();
     }
 
@@ -68,6 +79,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public RelayCommand OpenN9Command { get; }
     public RelayCommand OpenWindowsPhoneCommand { get; }
     public AsyncRelayCommand ScanCommand { get; }
+    public AsyncRelayCommand ConnectN9Command { get; }
+    public RelayCommand ForgetN9PairingCommand { get; }
 
     public NavigationSectionViewModel SelectedSection
     {
@@ -86,6 +99,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public bool IsHome => SelectedSection.IsHome;
     public bool IsFamilyView => !IsHome;
+    public bool IsN9Family => ActiveFamilyTitle == "Nokia N9";
+    public bool CanForgetN9Pairing => IsN9Family && _n9Connection.HasPairing;
     public string ActiveFamilyTitle => _activeFamilyTitle;
     public string PageTitle => SelectedSection.Title;
     public string PageSubtitle => SelectedSection.Subtitle;
@@ -118,6 +133,23 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public string ScanButtonText => IsScanning ? "Recherche…" : "Rechercher";
 
+    public bool IsConnectingN9
+    {
+        get => _isConnectingN9;
+        private set
+        {
+            if (SetField(ref _isConnectingN9, value))
+            {
+                OnPropertyChanged(nameof(N9ConnectionButtonText));
+                ConnectN9Command.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public string N9ConnectionButtonText => IsConnectingN9
+        ? "Connexion…"
+        : _n9Connection.HasPairing ? "Lire le N9" : "Appairer le N9";
+
     private void OpenFamily(IReadOnlyList<NavigationSectionViewModel> familySections)
     {
         _activeFamilyTitle = familySections[0].FamilyTitle;
@@ -127,6 +159,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             Sections.Add(section);
 
         OnPropertyChanged(nameof(ActiveFamilyTitle));
+        OnPropertyChanged(nameof(IsN9Family));
+        OnPropertyChanged(nameof(CanForgetN9Pairing));
+        OnPropertyChanged(nameof(N9ConnectionButtonText));
+        ForgetN9PairingCommand.RaiseCanExecuteChanged();
         SelectSection(familySections[0]);
     }
 
@@ -136,6 +172,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         Sections.Clear();
         Sections.Add(_homeSection);
         OnPropertyChanged(nameof(ActiveFamilyTitle));
+        OnPropertyChanged(nameof(IsN9Family));
+        OnPropertyChanged(nameof(CanForgetN9Pairing));
+        ForgetN9PairingCommand.RaiseCanExecuteChanged();
         SelectSection(_homeSection);
     }
 
@@ -160,7 +199,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         try
         {
             var phones = await _discovery.DiscoverAsync();
-            _connectedPhone = phones.FirstOrDefault();
+            _connectedPhone = phones.FirstOrDefault(phone =>
+                SelectedSection.Platforms.Contains(phone.Platform));
             if (_connectedPhone is null)
             {
                 ConnectionTitle = "Aucun téléphone détecté";
@@ -183,6 +223,93 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             IsScanning = false;
             RefreshFeatures();
         }
+    }
+
+    private async Task ConnectN9Async()
+    {
+        var previousTitle = ConnectionTitle;
+        var previousDetail = ConnectionDetail;
+        IsConnectingN9 = true;
+        try
+        {
+            N9ConnectionStatus status;
+            if (_n9Connection.HasPairing)
+            {
+                ConnectionTitle = "Connexion au Nokia N9…";
+                ConnectionDetail = "Vérification de la liaison développeur et de l’empreinte enregistrée.";
+                status = await _n9Connection.GetStatusAsync();
+            }
+            else
+            {
+                var password = _n9PairingInteraction.RequestTemporaryPassword();
+                if (password is null)
+                {
+                    ConnectionTitle = previousTitle;
+                    ConnectionDetail = previousDetail;
+                    return;
+                }
+
+                ConnectionTitle = "Appairage du Nokia N9…";
+                ConnectionDetail = "Connexion au compte developer et vérification de l’identité du téléphone.";
+                status = await _n9Connection.PairAsync(
+                    password,
+                    _n9PairingInteraction.ConfirmHostKey);
+            }
+
+            if (!status.IsReachable || !status.IsHarmattan)
+            {
+                ConnectionTitle = status.IsPaired ? "Nokia N9 appairé" : "Connexion impossible";
+                ConnectionDetail = status.Detail;
+                return;
+            }
+
+            var details = await _n9Connection.ReadDeviceDetailsAsync();
+            var existingId = _connectedPhone?.Platform == PhonePlatform.MeeGoHarmattan
+                ? _connectedPhone.DeviceId
+                : "n9-sdk-usb";
+            _connectedPhone = new DetectedPhone(
+                existingId,
+                string.IsNullOrWhiteSpace(details.ProductName) ? "Nokia N9" : details.ProductName,
+                PhonePlatform.MeeGoHarmattan,
+                details.SystemName,
+                details.SystemVersion,
+                details.SystemBuild,
+                details.ProductCode,
+                PhoneCapability.ReadIdentity | PhoneCapability.ReadFirmware);
+            ConnectionTitle = _connectedPhone.DisplayName;
+            ConnectionDetail = DescribeN9(_connectedPhone, details);
+        }
+        catch (N9ConnectionException exception)
+        {
+            ConnectionTitle = "Connexion au N9 impossible";
+            ConnectionDetail = exception.Message;
+        }
+        catch (Exception)
+        {
+            ConnectionTitle = "Connexion au N9 interrompue";
+            ConnectionDetail = "ResurectPhone n’a pas pu lire le téléphone. Vérifiez SDK Connectivity et reconnectez le câble USB.";
+        }
+        finally
+        {
+            IsConnectingN9 = false;
+            OnPropertyChanged(nameof(N9ConnectionButtonText));
+            OnPropertyChanged(nameof(CanForgetN9Pairing));
+            ForgetN9PairingCommand.RaiseCanExecuteChanged();
+            RefreshFeatures();
+        }
+    }
+
+    private void ForgetN9Pairing()
+    {
+        if (!_n9PairingInteraction.ConfirmForgetPairing())
+            return;
+
+        _n9Connection.ForgetPairing();
+        ConnectionTitle = "Liaison N9 oubliée";
+        ConnectionDetail = "La clé privée et l’empreinte du téléphone ont été supprimées de ce PC.";
+        OnPropertyChanged(nameof(N9ConnectionButtonText));
+        OnPropertyChanged(nameof(CanForgetN9Pairing));
+        ForgetN9PairingCommand.RaiseCanExecuteChanged();
     }
 
     private void RefreshFeatures()
@@ -210,6 +337,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return string.IsNullOrWhiteSpace(description)
             ? "Téléphone reconnu. L’identification détaillée reste à effectuer."
             : description;
+    }
+
+    private static string DescribeN9(DetectedPhone phone, N9DeviceDetails details)
+    {
+        var values = new[]
+        {
+            phone.SystemName,
+            phone.SystemVersion,
+            string.IsNullOrWhiteSpace(phone.BuildNumber) ? null : phone.BuildNumber,
+            string.IsNullOrWhiteSpace(phone.ProductCode) ? null : phone.ProductCode,
+            string.IsNullOrWhiteSpace(details.KernelVersion) ? null : $"noyau {details.KernelVersion}"
+        };
+        return string.Join(" · ", values.Where(value => !string.IsNullOrWhiteSpace(value)));
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

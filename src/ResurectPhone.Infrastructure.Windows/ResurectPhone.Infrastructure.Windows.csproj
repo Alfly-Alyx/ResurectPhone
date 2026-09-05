@@ -5,4 +5,9 @@
   <ItemGroup>
     <ProjectReference Include="..\ResurectPhone.Core\ResurectPhone.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="SSH.NET" Version="2026.0.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+    <InternalsVisibleTo Include="ResurectPhone.Infrastructure.Windows.Tests" />
+  </ItemGroup>
 </Project>

@@ -5,6 +5,7 @@
         WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow"
         ResizeMode="CanResize" ShowInTaskbar="True">
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <Style x:Key="NavList" TargetType="ListBox">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
@@ -322,9 +323,16 @@
                                 <TextBlock Text="{Binding ConnectionDetail}" Margin="0,5,0,0"
                                            Foreground="{StaticResource MutedTextBrush}" />
                             </StackPanel>
-                            <Button Grid.Column="2" Content="{Binding ScanButtonText}"
-                                    Command="{Binding ScanCommand}" Style="{StaticResource PrimaryButton}"
-                                    VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="Oublier la liaison" Command="{Binding ForgetN9PairingCommand}"
+                                        Margin="0,0,8,0"
+                                        Visibility="{Binding CanForgetN9Pairing, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <Button Content="{Binding N9ConnectionButtonText}"
+                                        Command="{Binding ConnectN9Command}"
+                                        Style="{StaticResource PrimaryButton}" Margin="0,0,8,0"
+                                        Visibility="{Binding IsN9Family, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <Button Content="{Binding ScanButtonText}" Command="{Binding ScanCommand}" />
+                            </StackPanel>
                         </Grid>
                     </Border>
 

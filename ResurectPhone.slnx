@@ -4,4 +4,7 @@
     <Project Path="src/ResurectPhone.Core/ResurectPhone.Core.csproj" />
     <Project Path="src/ResurectPhone.Infrastructure.Windows/ResurectPhone.Infrastructure.Windows.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ResurectPhone.Infrastructure.Windows.Tests/ResurectPhone.Infrastructure.Windows.Tests.csproj" />
+  </Folder>
 </Solution>
