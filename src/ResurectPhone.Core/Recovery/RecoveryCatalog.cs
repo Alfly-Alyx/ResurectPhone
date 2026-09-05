@@ -7,7 +7,7 @@ public static class RecoveryCatalog
     private static readonly IReadOnlySet<PhonePlatform> N9 =
         new HashSet<PhonePlatform> { PhonePlatform.MeeGoHarmattan };
 
-    private static readonly IReadOnlySet<PhonePlatform> Lumia =
+    private static readonly IReadOnlySet<PhonePlatform> WindowsPhone =
         new HashSet<PhonePlatform> { PhonePlatform.WindowsPhone, PhonePlatform.Windows10Mobile };
 
     public static IReadOnlyList<RecoveryFeature> Features { get; } =
@@ -183,11 +183,20 @@ public static class RecoveryCatalog
             PhoneCapability.InstallPackages,
             [ "sysklogd" ]),
         new(
+            "windows-phone.alternative-stores",
+            RecoveryArea.StoresAndApplications,
+            "Boutiques alternatives",
+            "Évaluer les boutiques encore utilisables et permettre leur installation depuis ResurectPhone sur les appareils compatibles.",
+            WindowsPhone,
+            RecoveryRisk.SystemChange,
+            RecoveryAvailability.Researching,
+            PhoneCapability.InstallPackages),
+        new(
             "lumia.wpinternals",
             RecoveryArea.WindowsInternals,
             "Windows Internals",
             "Préparer les outils avancés uniquement pour un appareil Windows Phone et un état système compatibles.",
-            Lumia,
+            WindowsPhone,
             RecoveryRisk.FirmwareChange,
             RecoveryAvailability.Planned,
             PhoneCapability.FlashFirmware),
@@ -196,7 +205,7 @@ public static class RecoveryCatalog
             RecoveryArea.AlternativeSystem,
             "Android sur Windows Phone",
             "Évaluer le projet Android existant et proposer son installation uniquement sur les appareils Windows Phone compatibles.",
-            Lumia,
+            WindowsPhone,
             RecoveryRisk.FirmwareChange,
             RecoveryAvailability.Researching,
             PhoneCapability.InstallAlternativeSystem)
