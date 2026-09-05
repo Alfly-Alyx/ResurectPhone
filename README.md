@@ -8,6 +8,7 @@ ResurectPhone est un laboratoire autonome de remise en service de téléphones. 
 - appairage explicite du Nokia N9 par le mode USB de SDK Connectivity ;
 - lecture réelle et sans modification du modèle, d’Harmattan/PR1.3, du code produit et du noyau ;
 - empreinte SSH épinglée et clé privée d’appairage protégée par le compte Windows ;
+- règles de sauvegarde, validation, installation et suppression des paquets N9 issues d’essais matériels ;
 - catalogue indépendant des fonctions de restauration ;
 - séparation entre interface, règles métier et accès Windows ;
 - aucune opération de flashage ou de réparation automatique dans ce premier socle ;
@@ -21,3 +22,6 @@ ResurectPhone est un laboratoire autonome de remise en service de téléphones. 
 - vérification en ligne après chaque réparation qui dépend d’un service Internet.
 
 Les opérations sensibles devront toujours vérifier l’appareil, la compatibilité, l’intégrité des fichiers et la présence d’une sauvegarde avant de devenir accessibles.
+
+La procédure et les limites Aegis des paquets Harmattan sont détaillées dans
+[`docs/N9-PACKAGE-MAINTENANCE.md`](docs/N9-PACKAGE-MAINTENANCE.md).
