@@ -186,7 +186,7 @@ public static class RecoveryCatalog
             "windows-phone.alternative-stores",
             RecoveryArea.StoresAndApplications,
             "Boutiques alternatives",
-            "Évaluer les boutiques encore utilisables et permettre leur installation depuis ResurectPhone sur les appareils compatibles.",
+            "Embarquer dans ResurectPhone les paquets des boutiques validées et permettre leur installation hors connexion en un clic sur les appareils compatibles.",
             WindowsPhone,
             RecoveryRisk.SystemChange,
             RecoveryAvailability.Researching,

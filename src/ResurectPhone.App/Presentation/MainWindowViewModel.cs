@@ -49,7 +49,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         [
             new("windows-phone.home", "Windows Phone", "\uE80F", "Windows Phone", "Solutions avancées prévues pour les appareils Windows Phone compatibles.", null, WindowsPhonePlatforms),
             new("windows-phone.device", "Windows Phone", "\uE946", "Appareil", "Modèle, version de Windows Phone et compatibilité.", RecoveryArea.Device, WindowsPhonePlatforms),
-            new("windows-phone.stores", "Windows Phone", "\uE719", "Boutiques alternatives", "Boutiques disponibles et installation selon la compatibilité de l’appareil.", RecoveryArea.StoresAndApplications, WindowsPhonePlatforms),
+            new("windows-phone.stores", "Windows Phone", "\uE719", "Boutiques alternatives", "Paquets de boutiques intégrés au logiciel et installation hors connexion selon la compatibilité.", RecoveryArea.StoresAndApplications, WindowsPhonePlatforms),
             new("windows-phone.internals", "Windows Phone", "\uE8A7", "Windows Internals", "Déverrouillage et opérations avancées sur les modèles compatibles.", RecoveryArea.WindowsInternals, WindowsPhonePlatforms),
             new("windows-phone.android", "Windows Phone", "\uE8D7", "Android", "Projet Android et possibilité d’installation selon l’appareil.", RecoveryArea.AlternativeSystem, WindowsPhonePlatforms)
         ];
