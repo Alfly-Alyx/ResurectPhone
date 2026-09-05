@@ -13,7 +13,7 @@ ResurectPhone est un laboratoire autonome de remise en service de téléphones. 
 ## Périmètre prévu
 
 - Nokia N9 : ROM Harmattan PR1.3, dépôts, applications, Nokia Store, compte Nokia, navigation Internet, certificats, GPS, Cartes et Drive ;
-- Lumia : diagnostic, Windows Internals et installation expérimentale des projets Android compatibles ;
+- Windows Phone : diagnostic, Windows Internals et installation expérimentale des projets Android compatibles ;
 - ressources de réparation disponibles hors connexion lorsque leur redistribution est autorisée ;
 - vérification en ligne après chaque réparation qui dépend d’un service Internet.
 

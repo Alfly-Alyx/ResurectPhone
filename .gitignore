@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+.vs/
+.vscode/
+.idea/
+TestResults/
+artifacts/
+publish/
+*.user
+*.suo
+*.pdb
+*.dll
+*.exe
+*.log
+*.tmp
