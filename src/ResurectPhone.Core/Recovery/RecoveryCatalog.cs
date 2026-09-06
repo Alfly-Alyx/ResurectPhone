@@ -10,6 +10,9 @@ public static class RecoveryCatalog
     private static readonly IReadOnlySet<PhonePlatform> WindowsPhone =
         new HashSet<PhonePlatform> { PhonePlatform.WindowsPhone, PhonePlatform.Windows10Mobile };
 
+    private static readonly IReadOnlySet<PhonePlatform> Android =
+        new HashSet<PhonePlatform> { PhonePlatform.Android };
+
     public static IReadOnlyList<RecoveryFeature> Features { get; } =
     [
         new(
@@ -17,10 +20,28 @@ public static class RecoveryCatalog
             RecoveryArea.Device,
             "Identifier le téléphone",
             "Lire le modèle, le système, la version, le build et le code produit sans modifier l’appareil.",
-            new HashSet<PhonePlatform> { PhonePlatform.MeeGoHarmattan, PhonePlatform.WindowsPhone, PhonePlatform.Windows10Mobile },
+            new HashSet<PhonePlatform> { PhonePlatform.Android, PhonePlatform.MeeGoHarmattan, PhonePlatform.WindowsPhone, PhonePlatform.Windows10Mobile },
             RecoveryRisk.ReadOnly,
             RecoveryAvailability.Researching,
             PhoneCapability.ReadIdentity),
+        new(
+            "android.task-manager",
+            RecoveryArea.TaskManager,
+            "Gestionnaire des tâches",
+            "Suivre en temps réel les processus Android et les ressources réellement accessibles par ADB, sans accès root.",
+            Android,
+            RecoveryRisk.ReadOnly,
+            RecoveryAvailability.Ready,
+            PhoneCapability.ReadProcesses),
+        new(
+            "android.memory-release",
+            RecoveryArea.TaskManager,
+            "Libérer la mémoire vive",
+            "Demander à Android de fermer les applications d’arrière-plan autorisées, puis mesurer la mémoire réellement récupérée.",
+            Android,
+            RecoveryRisk.ReversibleChange,
+            RecoveryAvailability.Ready,
+            PhoneCapability.ManageProcesses),
         new(
             "n9.firmware",
             RecoveryArea.Firmware,

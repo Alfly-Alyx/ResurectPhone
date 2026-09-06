@@ -1,4 +1,5 @@
 using System.Windows;
+using ResurectPhone.App.Presentation;
 
 namespace ResurectPhone.App;
 
@@ -13,5 +14,6 @@ public partial class MainWindow : Window
         MaxHeight = workArea.Height;
         Width = Math.Min(Width, workArea.Width);
         Height = Math.Min(Height, workArea.Height);
+        Closed += (_, _) => (DataContext as MainWindowViewModel)?.Shutdown();
     }
 }

@@ -9,6 +9,10 @@ ResurectPhone est un laboratoire autonome de remise en service de téléphones. 
 - lecture réelle et sans modification du modèle, d’Harmattan/PR1.3, du code produit et du noyau ;
 - empreinte SSH épinglée et clé privée d’appairage protégée par le compte Windows ;
 - règles de sauvegarde, validation, installation et suppression des paquets N9 issues d’essais matériels ;
+- espace Android distinct, détection ADB explicite et lecture de l’identité du téléphone ;
+- gestionnaire des tâches Android en temps réel : processus, PID, utilisateur, état, CPU, mémoire, lectures/écritures, threads et commande ;
+- filtre et tri des processus, avec maintien à l’écran des lignes dont Android masque certains compteurs ;
+- libération prudente de la mémoire vive, après confirmation, limitée aux applications d’arrière-plan autorisées par Android et suivie d’une mesure avant/après ;
 - catalogue indépendant des fonctions de restauration ;
 - séparation entre interface, règles métier et accès Windows ;
 - aucune opération de flashage ou de réparation automatique dans ce premier socle ;
@@ -18,10 +22,13 @@ ResurectPhone est un laboratoire autonome de remise en service de téléphones. 
 
 - Nokia N9 : ROM Harmattan PR1.3, dépôts, applications, Nokia Store, compte Nokia, navigation Internet, certificats, GPS, Cartes et Drive ;
 - Windows Phone : diagnostic, Windows Internals, installation expérimentale des projets Android compatibles et paquets de boutiques alternatives installables hors connexion ;
+- Android : diagnostic ADB, suivi des processus et entretien de la mémoire sans accès root ;
 - ressources de réparation disponibles hors connexion lorsque leur redistribution est autorisée ;
 - vérification en ligne après chaque réparation qui dépend d’un service Internet.
 
 Les opérations sensibles devront toujours vérifier l’appareil, la compatibilité, l’intégrité des fichiers et la présence d’une sauvegarde avant de devenir accessibles.
+
+Le gestionnaire Android recherche ADB dans une installation existante de Platform Tools et dans le futur dossier embarqué `tools/platform-tools`. Aucun binaire Google n’est actuellement redistribué dans le dépôt. La quantité de détails disponible dépend des restrictions de la version d’Android et du constructeur.
 
 La procédure et les limites Aegis des paquets Harmattan sont détaillées dans
 [`docs/N9-PACKAGE-MAINTENANCE.md`](docs/N9-PACKAGE-MAINTENANCE.md).

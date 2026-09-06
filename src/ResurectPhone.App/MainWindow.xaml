@@ -195,6 +195,9 @@
                                             <DataTrigger Binding="{Binding Key}" Value="windows-phone.android">
                                                 <Setter Property="ContentTemplate" Value="{StaticResource AndroidNavigationIcon}" />
                                             </DataTrigger>
+                                            <DataTrigger Binding="{Binding Key}" Value="android.home">
+                                                <Setter Property="ContentTemplate" Value="{StaticResource AndroidNavigationIcon}" />
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </ContentControl.Style>
@@ -226,9 +229,9 @@
                     <TextBlock Text="Quel téléphone souhaitez-vous remettre en service ?"
                                Style="{StaticResource PageSubtitle}" />
 
-                    <UniformGrid Columns="2" Margin="0,12,0,0">
+                    <UniformGrid Columns="3" Margin="0,12,0,0">
                         <Button Command="{Binding OpenWindowsPhoneCommand}"
-                                Style="{StaticResource HomeCardButton}" Margin="0,0,10,0" MinHeight="320">
+                                Style="{StaticResource HomeCardButton}" Margin="0,0,8,0" MinHeight="320">
                             <Grid Margin="28">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
@@ -257,7 +260,7 @@
                         </Button>
 
                         <Button Command="{Binding OpenN9Command}"
-                                Style="{StaticResource HomeCardButton}" Margin="10,0,0,0" MinHeight="320">
+                                Style="{StaticResource HomeCardButton}" Margin="4,0" MinHeight="320">
                             <Grid Margin="28">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
@@ -284,6 +287,45 @@
                                            Margin="0,24,0,0" />
                             </Grid>
                         </Button>
+
+                        <Button Command="{Binding OpenAndroidCommand}"
+                                Style="{StaticResource HomeCardButton}" Margin="8,0,0,0" MinHeight="320">
+                            <Grid Margin="28">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Border Width="58" Height="58" CornerRadius="12"
+                                        Background="{StaticResource SelectionFillBrush}" HorizontalAlignment="Left">
+                                    <Viewbox Width="34" Height="34">
+                                        <Canvas Width="24" Height="24">
+                                            <Path Style="{StaticResource Windows10NavigationIconStroke}"
+                                                  Stroke="{StaticResource AccentBrush}"
+                                                  Data="M8.2,5.4 L6.8,3.1 M15.8,5.4 L17.2,3.1 M5.6,9.5 C5.6,6.7 8.5,4.7 12,4.7 C15.5,4.7 18.4,6.7 18.4,9.5 M5.6,10.8 L18.4,10.8 L18.4,16.8 C18.4,17.5 17.8,18.1 17.1,18.1 L6.9,18.1 C6.2,18.1 5.6,17.5 5.6,16.8 Z M3,11.1 L3,16.7 M21,11.1 L21,16.7 M8.7,18.1 L8.7,21.2 M15.3,18.1 L15.3,21.2" />
+                                            <Ellipse Canvas.Left="8.45" Canvas.Top="7.15" Width="1.1" Height="1.1"
+                                                     Fill="{StaticResource AccentBrush}" />
+                                            <Ellipse Canvas.Left="14.45" Canvas.Top="7.15" Width="1.1" Height="1.1"
+                                                     Fill="{StaticResource AccentBrush}" />
+                                        </Canvas>
+                                    </Viewbox>
+                                </Border>
+                                <TextBlock Grid.Row="1" Text="Android" FontSize="24" FontWeight="SemiBold"
+                                           Margin="0,22,0,8" />
+                                <StackPanel Grid.Row="2">
+                                    <TextBlock Text="Observer et entretenir directement un téléphone Android."
+                                               TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}"
+                                               Margin="0,0,0,14" />
+                                    <TextBlock Text="Processus  ·  CPU  ·  Mémoire vive"
+                                               TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="12" />
+                                </StackPanel>
+                                <TextBlock Grid.Row="3" Text="Ouvrir Android  →"
+                                           Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"
+                                           Margin="0,24,0,0" />
+                            </Grid>
+                        </Button>
                     </UniformGrid>
                 </StackPanel>
             </ScrollViewer>
@@ -293,7 +335,7 @@
                     <Style TargetType="ScrollViewer">
                         <Setter Property="Visibility" Value="Collapsed" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsFamilyView}" Value="True">
+                            <DataTrigger Binding="{Binding IsStandardFamilyView}" Value="True">
                                 <Setter Property="Visibility" Value="Visible" />
                             </DataTrigger>
                         </Style.Triggers>
@@ -383,6 +425,169 @@
                     </ItemsControl>
                 </StackPanel>
             </ScrollViewer>
+
+            <Grid Margin="36,28,36,30">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsTaskManagerView}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Android" Foreground="{StaticResource AccentBrush}"
+                               FontSize="12" FontWeight="SemiBold" Margin="0,0,0,5" />
+                    <TextBlock Text="Gestionnaire des tâches" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="Processus et ressources consommées en temps réel, selon les informations accessibles par Android."
+                               Style="{StaticResource PageSubtitle}" />
+                </StackPanel>
+
+                <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,14,0,14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="48" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="36" Height="36" CornerRadius="18"
+                                Background="{StaticResource SelectionFillBrush}" VerticalAlignment="Top">
+                            <Viewbox Width="22" Height="22">
+                                <Canvas Width="24" Height="24">
+                                    <Path Style="{StaticResource Windows10NavigationIconStroke}"
+                                          Stroke="{StaticResource AccentBrush}"
+                                          Data="M8.2,5.4 L6.8,3.1 M15.8,5.4 L17.2,3.1 M5.6,9.5 C5.6,6.7 8.5,4.7 12,4.7 C15.5,4.7 18.4,6.7 18.4,9.5 M5.6,10.8 L18.4,10.8 L18.4,16.8 C18.4,17.5 17.8,18.1 17.1,18.1 L6.9,18.1 C6.2,18.1 5.6,17.5 5.6,16.8 Z M3,11.1 L3,16.7 M21,11.1 L21,16.7 M8.7,18.1 L8.7,21.2 M15.3,18.1 L15.3,21.2" />
+                                    <Ellipse Canvas.Left="8.45" Canvas.Top="7.15" Width="1.1" Height="1.1"
+                                             Fill="{StaticResource AccentBrush}" />
+                                    <Ellipse Canvas.Left="14.45" Canvas.Top="7.15" Width="1.1" Height="1.1"
+                                             Fill="{StaticResource AccentBrush}" />
+                                </Canvas>
+                            </Viewbox>
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="2,0,18,0">
+                            <TextBlock Text="{Binding ConnectionTitle}" FontSize="16" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding AndroidTaskManagerDetail}" Margin="0,5,0,0"
+                                       TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="{Binding AndroidMemoryButtonText}"
+                                    Command="{Binding ReleaseAndroidMemoryCommand}"
+                                    IsEnabled="{Binding CanReleaseAndroidMemory}" Margin="0,0,8,0" />
+                            <Button Content="{Binding ScanButtonText}" Command="{Binding ScanCommand}"
+                                    Margin="0,0,8,0" />
+                            <Button Content="{Binding AndroidMonitoringButtonText}"
+                                    Command="{Binding ToggleAndroidMonitoringCommand}"
+                                    Style="{StaticResource PrimaryButton}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <UniformGrid Grid.Row="2" Columns="4" Margin="0,0,0,14">
+                    <Border Style="{StaticResource Card}" Margin="0,0,6,0" Padding="16,12">
+                        <StackPanel>
+                            <TextBlock Text="PROCESSEURS" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+                            <TextBlock Text="{Binding AndroidCpuText}" FontSize="22" FontWeight="SemiBold"
+                                       Margin="0,3,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}" Margin="2,0,4,0" Padding="16,12">
+                        <StackPanel>
+                            <TextBlock Text="MÉMOIRE UTILISÉE" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+                            <TextBlock Text="{Binding AndroidMemoryText}" FontSize="18" FontWeight="SemiBold"
+                                       Margin="0,5,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}" Margin="4,0,2,0" Padding="16,12">
+                        <StackPanel>
+                            <TextBlock Text="MÉMOIRE DISPONIBLE" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+                            <TextBlock Text="{Binding AndroidAvailableMemoryText}" FontSize="18" FontWeight="SemiBold"
+                                       Margin="0,5,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}" Margin="6,0,0,0" Padding="16,12">
+                        <StackPanel>
+                            <TextBlock Text="PROCESSUS" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+                            <TextBlock Text="{Binding AndroidProcessCountText}" FontSize="22" FontWeight="SemiBold"
+                                       Margin="0,3,0,0" />
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+
+                <Grid Grid.Row="3" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Text="{Binding AndroidFilter, UpdateSourceTrigger=PropertyChanged}"
+                             Width="320" HorizontalAlignment="Left" Padding="10,7"
+                             ToolTip="Filtrer par nom, PID, utilisateur ou ligne de commande" />
+                    <TextBlock Grid.Column="1" Text="{Binding AndroidLastRefreshText}"
+                               Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" />
+                </Grid>
+
+                <DataGrid Grid.Row="4" ItemsSource="{Binding AndroidProcesses}"
+                          AutoGenerateColumns="False" IsReadOnly="True"
+                          CanUserAddRows="False" CanUserDeleteRows="False"
+                          CanUserReorderColumns="True" CanUserResizeColumns="True"
+                          CanUserSortColumns="True" HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource BorderBrush}"
+                          Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                          BorderThickness="1" RowBackground="{StaticResource SurfaceBrush}"
+                          AlternatingRowBackground="{StaticResource SurfaceSecondaryBrush}"
+                          AlternationCount="2" SelectionMode="Single" SelectionUnit="FullRow"
+                          EnableRowVirtualization="True" EnableColumnVirtualization="True"
+                          HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="{StaticResource SurfaceSecondaryBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                            <Setter Property="BorderThickness" Value="0,0,1,1" />
+                            <Setter Property="Padding" Value="10,8" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Setter Property="MinHeight" Value="34" />
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Setter Property="Padding" Value="9,5" />
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                        </Style>
+                    </DataGrid.CellStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Processus" Binding="{Binding Name}" Width="1.7*" />
+                        <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="70" />
+                        <DataGridTextColumn Header="Utilisateur" Binding="{Binding User}" Width="115" />
+                        <DataGridTextColumn Header="État" Binding="{Binding State}" Width="105" />
+                        <DataGridTextColumn Header="CPU" Binding="{Binding CpuText}" SortMemberPath="CpuUsagePercent" Width="78" />
+                        <DataGridTextColumn Header="Mémoire" Binding="{Binding MemoryText}" SortMemberPath="ResidentMemoryBytes" Width="95" />
+                        <DataGridTextColumn Header="Lecture" Binding="{Binding StorageReadText}" SortMemberPath="StorageReadBytesPerSecond" Width="90" />
+                        <DataGridTextColumn Header="Écriture" Binding="{Binding StorageWriteText}" SortMemberPath="StorageWriteBytesPerSecond" Width="90" />
+                        <DataGridTextColumn Header="Threads" Binding="{Binding ThreadCountText}" SortMemberPath="ThreadCount" Width="74" />
+                        <DataGridTextColumn Header="Commande" Binding="{Binding CommandLine}" Width="2.3*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
             </Grid>
         </Border>
     </Grid>

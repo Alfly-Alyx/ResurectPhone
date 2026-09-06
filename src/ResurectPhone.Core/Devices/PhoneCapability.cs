@@ -12,5 +12,7 @@ public enum PhoneCapability
     ManageCertificates = 1 << 5,
     ManageNavigation = 1 << 6,
     FlashFirmware = 1 << 7,
-    InstallAlternativeSystem = 1 << 8
+    InstallAlternativeSystem = 1 << 8,
+    ReadProcesses = 1 << 9,
+    ManageProcesses = 1 << 10
 }

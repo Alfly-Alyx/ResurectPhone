@@ -10,6 +10,7 @@ public enum RecoveryArea
     NokiaAccount,
     Cleanup,
     DeveloperTools,
+    TaskManager,
     WindowsInternals,
     AlternativeSystem
 }
