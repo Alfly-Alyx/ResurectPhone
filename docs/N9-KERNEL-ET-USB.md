@@ -58,6 +58,11 @@ pourrait aussi en bénéficier. Tout PC ayant physiquement accès à cette liais
 USB peut obtenir une session `developer`. Le mot de passe administrateur
 utilisé par `devel-su` n’est pas modifié.
 
+Pour annuler la préparation, depuis `devel-su` sur le N9, restaurer les deux
+fichiers conservés dans le dossier de sauvegarde affiché par le script, puis
+redémarrer le serveur SSH ou le téléphone. Cette sauvegarde contient
+`/etc/shadow` : elle doit rester privée.
+
 La procédure n’a pas encore été exécutée sur le N9 branché. Après son exécution,
 il faudra vérifier l’appairage automatique, relever `uname -r` et confirmer
 que SDK Connectivity ne rétablit pas le mot de passe `developer` au redémarrage.

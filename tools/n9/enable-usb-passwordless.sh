@@ -20,7 +20,7 @@ fi
 configured=0
 if grep -q 'ResurectPhone USB sans mot de passe' "$config"; then
     configured=1
-elif grep -Eq '^[[:space:]]*Match[[:space:]]' "$config"; then
+elif grep -q '^[[:space:]]*Match[[:space:]]' "$config"; then
     echo "La configuration SSH contient déjà des règles Match : vérification manuelle nécessaire." >&2
     exit 1
 fi
