@@ -58,6 +58,48 @@ public sealed class N9SshConnectionService : IN9ConnectionService
                 "Le serveur SSH répond, mais MeeGo Harmattan n’a pas pu être confirmé sur cet appareil.");
         }
 
+        return await CompletePairingAsync(client, acceptedKey, status, cancellationToken);
+    }
+
+    public async Task<N9ConnectionStatus> PairWithoutPasswordAsync(
+        CancellationToken cancellationToken = default)
+    {
+        N9HostKeyIdentity? observedKey = null;
+        using var client = new SshClient(CreateConnectionInfo(
+            new NoneAuthenticationMethod(DefaultUserName)));
+        client.HostKeyReceived += (_, eventArgs) =>
+        {
+            observedKey = ToIdentity(eventArgs);
+            eventArgs.CanTrust = true;
+        };
+
+        try
+        {
+            await ConnectAsync(client, cancellationToken);
+        }
+        catch (N9ConnectionException exception) when (exception.InnerException is SshAuthenticationException)
+        {
+            throw new N9AuthenticationRequiredException(
+                "Le N9 exige encore une authentification. Activez une fois le mode USB sans mot de passe sur le téléphone.",
+                exception);
+        }
+
+        if (observedKey is null)
+            throw new N9ConnectionException("Le N9 n’a pas présenté d’empreinte SSH.");
+
+        var status = await ProbeAsync(client, cancellationToken);
+        if (!status.IsHarmattan)
+            throw new N9ConnectionException("Le serveur USB répond, mais MeeGo Harmattan n’a pas été confirmé.");
+
+        return await CompletePairingAsync(client, observedKey, status, cancellationToken);
+    }
+
+    private async Task<N9ConnectionStatus> CompletePairingAsync(
+        SshClient client,
+        N9HostKeyIdentity acceptedKey,
+        N9ConnectionStatus status,
+        CancellationToken cancellationToken)
+    {
         var (privateKey, publicKey) = GeneratePairingKey();
         await InstallPublicKeyAsync(client, publicKey, cancellationToken);
         var pairing = new N9Pairing(

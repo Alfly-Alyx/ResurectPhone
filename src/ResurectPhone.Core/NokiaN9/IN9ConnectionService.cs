@@ -28,8 +28,11 @@ public sealed record N9DeviceDetails
     public string Architecture { get; init; } = string.Empty;
 }
 
-public sealed class N9ConnectionException(string message, Exception? innerException = null)
+public class N9ConnectionException(string message, Exception? innerException = null)
     : IOException(message, innerException);
+
+public sealed class N9AuthenticationRequiredException(string message, Exception? innerException = null)
+    : N9ConnectionException(message, innerException);
 
 public interface IN9ConnectionService
 {
@@ -38,6 +41,9 @@ public interface IN9ConnectionService
     Task<N9ConnectionStatus> PairAsync(
         string temporaryPassword,
         Func<N9HostKeyIdentity, bool> approveHostKey,
+        CancellationToken cancellationToken = default);
+
+    Task<N9ConnectionStatus> PairWithoutPasswordAsync(
         CancellationToken cancellationToken = default);
 
     Task<N9ConnectionStatus> GetStatusAsync(CancellationToken cancellationToken = default);

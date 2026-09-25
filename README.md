@@ -5,7 +5,7 @@ ResurectPhone est un laboratoire autonome de remise en service de téléphones. 
 ## Premier socle
 
 - détection générique d’un téléphone connecté, sans inventer son identité ;
-- appairage explicite du Nokia N9 par le mode USB de SDK Connectivity ;
+- détection et appairage automatiques du Nokia N9 par le mode USB de SDK Connectivity après une préparation unique du téléphone ;
 - lecture réelle et sans modification du modèle, d’Harmattan/PR1.3, du code produit et du noyau ;
 - empreinte SSH épinglée et clé privée d’appairage protégée par le compte Windows ;
 - règles de sauvegarde, validation, installation et suppression des paquets N9 issues d’essais matériels ;
@@ -32,3 +32,7 @@ Le gestionnaire Android recherche ADB dans une installation existante de Platfor
 
 La procédure et les limites Aegis des paquets Harmattan sont détaillées dans
 [`docs/N9-PACKAGE-MAINTENANCE.md`](docs/N9-PACKAGE-MAINTENANCE.md).
+
+La recherche sur les noyaux du N9 et la préparation de l’appairage USB
+automatique sont détaillées dans
+[`docs/N9-KERNEL-ET-USB.md`](docs/N9-KERNEL-ET-USB.md).

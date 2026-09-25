@@ -18,5 +18,7 @@
   <ItemGroup>
     <Resource Include="Assets\ResurectPhone.png" />
     <None Include="Assets\ResurectPhone.svg" CopyToOutputDirectory="PreserveNewest" />
+    <EmbeddedResource Include="..\..\tools\n9\enable-usb-passwordless.sh"
+                      LogicalName="ResurectPhone.N9UsbSetup" />
   </ItemGroup>
 </Project>

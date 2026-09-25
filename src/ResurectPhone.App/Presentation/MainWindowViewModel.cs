@@ -34,6 +34,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string _connectionDetail = "Branchez un Nokia N9 ou un Windows Phone en USB.";
     private bool _isScanning;
     private bool _isConnectingN9;
+    private bool _isAutoDiscoveringN9;
+    private bool _n9Identified;
+    private bool _autoOpenedN9;
+    private DateTime _lastN9AutoAttemptUtc = DateTime.MinValue;
     private string? _androidSerial;
     private CancellationTokenSource? _androidMonitorCancellation;
     private IReadOnlyList<AndroidProcessInfo> _latestAndroidProcesses = [];
@@ -95,8 +99,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OpenWindowsPhoneCommand = new RelayCommand(() => OpenFamily(_windowsPhoneSections));
         OpenAndroidCommand = new RelayCommand(() => OpenFamily(_androidSections));
         ScanCommand = new AsyncRelayCommand(ScanAsync, () => !IsScanning);
-        ConnectN9Command = new AsyncRelayCommand(ConnectN9Async, () => !IsConnectingN9);
+        ConnectN9Command = new AsyncRelayCommand(() => ConnectN9Async(false), () => !IsConnectingN9);
         ForgetN9PairingCommand = new RelayCommand(ForgetN9Pairing, () => CanForgetN9Pairing);
+        PrepareN9UsbCommand = new RelayCommand(() => _n9PairingInteraction.ExportUsbSetupScript());
         ToggleAndroidMonitoringCommand = new RelayCommand(
             ToggleAndroidMonitoring,
             () => !IsScanning && !IsReleasingMemory);
@@ -117,6 +122,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public AsyncRelayCommand ScanCommand { get; }
     public AsyncRelayCommand ConnectN9Command { get; }
     public RelayCommand ForgetN9PairingCommand { get; }
+    public RelayCommand PrepareN9UsbCommand { get; }
     public RelayCommand ToggleAndroidMonitoringCommand { get; }
     public AsyncRelayCommand ReleaseAndroidMemoryCommand { get; }
 
@@ -192,7 +198,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public string N9ConnectionButtonText => IsConnectingN9
         ? "Connexion…"
-        : _n9Connection.HasPairing ? "Lire le N9" : "Appairer le N9";
+        : _n9Connection.HasPairing ? "Lire le N9" : "Connecter le N9";
 
     public bool IsAndroidMonitoring
     {
@@ -279,6 +285,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         StopAndroidMonitoring();
         _activeFamilyTitle = familySections[0].FamilyTitle;
+        if (_activeFamilyTitle != "Nokia N9")
+            _n9Identified = false;
         if (_activeFamilyTitle != "Android")
             _androidSerial = null;
         if (_connectedPhone is not null && !familySections[0].Platforms.Contains(_connectedPhone.Platform))
@@ -296,6 +304,70 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(N9ConnectionButtonText));
         ForgetN9PairingCommand.RaiseCanExecuteChanged();
         SelectSection(familySections[0]);
+    }
+
+    public async Task AutoDiscoverN9Async()
+    {
+        if (_isAutoDiscoveringN9 || IsScanning || IsConnectingN9 ||
+            (!IsHome && !IsN9Family))
+            return;
+
+        _isAutoDiscoveringN9 = true;
+        try
+        {
+            var phones = await _discovery.DiscoverAsync();
+            if (!IsHome && !IsN9Family)
+                return;
+            var n9 = phones.FirstOrDefault(phone => phone.Platform == PhonePlatform.MeeGoHarmattan);
+            if (n9 is null)
+            {
+                _n9Identified = false;
+                _lastN9AutoAttemptUtc = DateTime.MinValue;
+                if (IsN9Family && _connectedPhone?.Platform == PhonePlatform.MeeGoHarmattan)
+                {
+                    _connectedPhone = null;
+                    ConnectionTitle = "Nokia N9 déconnecté";
+                    ConnectionDetail = "Rebranchez le câble USB pour rétablir la liaison.";
+                    RefreshFeatures();
+                }
+                else if (IsHome && _connectedPhone?.Platform == PhonePlatform.MeeGoHarmattan)
+                {
+                    _connectedPhone = null;
+                }
+                return;
+            }
+
+            if (IsHome && !_autoOpenedN9)
+            {
+                _autoOpenedN9 = true;
+                OpenFamily(_n9Sections);
+            }
+
+            if (_n9Identified)
+                return;
+
+            if (_connectedPhone?.Platform != PhonePlatform.MeeGoHarmattan)
+            {
+                _connectedPhone = n9;
+                ConnectionTitle = "Nokia N9 détecté";
+                ConnectionDetail = "Liaison USB détectée. Connexion au téléphone…";
+                RefreshFeatures();
+            }
+
+            if (DateTime.UtcNow - _lastN9AutoAttemptUtc < TimeSpan.FromSeconds(30))
+                return;
+
+            _lastN9AutoAttemptUtc = DateTime.UtcNow;
+            await ConnectN9Async(true);
+        }
+        catch (Exception)
+        {
+            // Une recherche USB temporairement indisponible sera retentée au prochain passage.
+        }
+        finally
+        {
+            _isAutoDiscoveringN9 = false;
+        }
     }
 
     private void ShowHome()
@@ -446,7 +518,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
-    private async Task ConnectN9Async()
+    private async Task ConnectN9Async(bool automatic)
     {
         var previousTitle = ConnectionTitle;
         var previousDetail = ConnectionDetail;
@@ -462,19 +534,34 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
             else
             {
-                var password = _n9PairingInteraction.RequestTemporaryPassword();
-                if (password is null)
+                try
                 {
-                    ConnectionTitle = previousTitle;
-                    ConnectionDetail = previousDetail;
+                    ConnectionTitle = "Appairage USB automatique…";
+                    ConnectionDetail = "Vérification de l’identité du N9 et création d’une clé propre à ce PC.";
+                    status = await _n9Connection.PairWithoutPasswordAsync();
+                }
+                catch (N9AuthenticationRequiredException) when (automatic)
+                {
+                    ConnectionTitle = "Préparation du N9 nécessaire";
+                    ConnectionDetail = "Le N9 exige encore un mot de passe. Activez une fois l’accès USB sans mot de passe sur le téléphone.";
                     return;
                 }
+                catch (N9AuthenticationRequiredException)
+                {
+                    var password = _n9PairingInteraction.RequestTemporaryPassword();
+                    if (password is null)
+                    {
+                        ConnectionTitle = previousTitle;
+                        ConnectionDetail = previousDetail;
+                        return;
+                    }
 
-                ConnectionTitle = "Appairage du Nokia N9…";
-                ConnectionDetail = "Connexion au compte developer et vérification de l’identité du téléphone.";
-                status = await _n9Connection.PairAsync(
-                    password,
-                    _n9PairingInteraction.ConfirmHostKey);
+                    ConnectionTitle = "Appairage du Nokia N9…";
+                    ConnectionDetail = "Connexion au compte developer et vérification de l’identité du téléphone.";
+                    status = await _n9Connection.PairAsync(
+                        password,
+                        _n9PairingInteraction.ConfirmHostKey);
+                }
             }
 
             if (!status.IsReachable || !status.IsHarmattan)
@@ -499,6 +586,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 PhoneCapability.ReadIdentity | PhoneCapability.ReadFirmware);
             ConnectionTitle = _connectedPhone.DisplayName;
             ConnectionDetail = DescribeN9(_connectedPhone, details);
+            _n9Identified = true;
         }
         catch (N9ConnectionException exception)
         {
@@ -692,7 +780,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         ConnectionDetail = familyTitle switch
         {
             "Android" => "Activez le débogage USB, branchez un téléphone Android puis lancez la recherche.",
-            "Nokia N9" => "Branchez un Nokia N9 en USB ou utilisez l’appairage développeur.",
+            "Nokia N9" => "Branchez un Nokia N9 en mode USB SDK : la connexion démarre automatiquement.",
             _ => "Branchez un Windows Phone en USB, puis lancez la recherche."
         };
     }

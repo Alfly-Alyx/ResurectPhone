@@ -9,4 +9,6 @@ public interface IN9PairingInteraction
     bool ConfirmHostKey(N9HostKeyIdentity identity);
 
     bool ConfirmForgetPairing();
+
+    void ExportUsbSetupScript();
 }

@@ -366,6 +366,9 @@
                                            Foreground="{StaticResource MutedTextBrush}" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="Préparer USB" Command="{Binding PrepareN9UsbCommand}"
+                                        Margin="0,0,8,0"
+                                        Visibility="{Binding IsN9Family, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 <Button Content="Oublier la liaison" Command="{Binding ForgetN9PairingCommand}"
                                         Margin="0,0,8,0"
                                         Visibility="{Binding CanForgetN9Pairing, Converter={StaticResource BooleanToVisibilityConverter}}" />
