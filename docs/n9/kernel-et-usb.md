@@ -21,7 +21,9 @@ téléphone. Aucun noyau n’a été installé.
   binaire joint. La branche historique
   [`mer-n9-2.6.32-20121301`](https://github.com/nemomobile/kernel-adaptation-n950-n9/tree/mer-n9-2.6.32-20121301)
   est en `2.6.32.54` ; elle ne constitue pas une mise à jour de la base PR1.3.
-  Le `3.5.3` de Nemo n’est pas interchangeable avec le noyau Harmattan.
+  La compatibilité de la branche `3.5.3` avec Harmattan PR1.3 n’a pas été
+  validée dans ResurectPhone. Le seul nom du dépôt ne permet pas de conclure
+  à la compatibilité ou à l’incompatibilité de toutes ses branches.
 - [harmattan/kernel-plus-harmattan](https://github.com/harmattan/kernel-plus-harmattan/tree/harmattan-2632)
   contient une branche Harmattan `2.6.32.61`, avec notamment un changement
   intitulé « defconfig update: kernel-plus 2.6.32.61 ». Son dernier commit
@@ -90,8 +92,10 @@ jusqu’à restauration. Enfin, cette mise à jour ne change pas en soi le mot d
 passe de SDK Connectivity ni l’appairage USB : ceux-ci dépendent de la
 configuration du service SSH.
 
-Conclusion : `kernel-plus-harmattan` est une piste historique de mise à niveau
-du noyau **Harmattan PR1.3** vers `2.6.32.61`. Je n’ai pas trouvé de branche
+Conclusion : `kernel-plus-harmattan` est un noyau communautaire conçu pour
+**Harmattan**, en version `2.6.32.61`. Le fork `r7` contient une configuration
+RM-696. Cela identifie sa cible ; son installation sur le téléphone connecté
+reste à valider. Je n’ai pas trouvé de branche
 Harmattan plus récente et maintenue parmi les sources examinées. L’ancienne
 archive communautaire et le fork `r7` ne sont pas des mises à jour validées
 pour ce téléphone. Un port Linux alternatif est un changement de système

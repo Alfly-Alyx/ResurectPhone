@@ -21,9 +21,10 @@ public sealed partial class N9SshConnectionService
             var text = $"Modèle : {details.ProductName}\nType matériel : {details.ProductCode}\nCode produit régional : {details.SalesCode}\nSystème : {details.SystemName} {details.SystemVersion}\nBuild : {details.SystemBuild}\nNoyau : {details.KernelVersion}\nArchitecture : {details.Architecture}";
             if (featureId == "n9.firmware")
                 text += "\n\nHarmattan PR1.3 est la famille compatible avec le N9 RM-696. Les variantes régionales exigent le code produit exact de l’appareil.\n" +
-                    "kernel-plus 2.6.32.61 est une piste historique ; les noyaux Nemo/Mer ne remplacent pas directement Harmattan.\n" +
+                    "Kernel-plus 2.6.32.61 est un noyau communautaire conçu pour Harmattan, avec une configuration pour le N9 RM-696. Son installation sur ce téléphone reste à valider.\n" +
+                    "Le dépôt Nemo propose notamment les branches 2.6.32.54 et 3.5.3. La compatibilité de la branche 3.5.3 avec Harmattan PR1.3 n’a pas été validée dans ResurectPhone.\n" +
                     "Aucune image ROM avec compatibilité et empreinte vérifiées n’est embarquée. Le flashage reste indisponible.\n" +
-                    "Sources : https://github.com/harmattan/kernel-plus-harmattan — https://wiki.maemo.org/Ubiboot";
+                    "Sources : https://github.com/harmattan/kernel-plus-harmattan — https://github.com/hurrian/kernel-plus-harmattan/tree/kernel-plus-r7 — https://github.com/nemomobile/kernel-adaptation-n950-n9";
             return new(featureId == "device.identity" ? "Identité lue sur le N9" : "Compatibilité firmware examinée", text);
         }
         if (featureId is "n9.package-backup" or "n9.cleanup")
