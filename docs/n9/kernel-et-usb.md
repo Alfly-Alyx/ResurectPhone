@@ -110,7 +110,7 @@ autorisé. Une préparation unique depuis le Terminal du N9 est nécessaire.
 1. Dans ResurectPhone, ouvrir Nokia N9 puis choisir **Préparer USB** pour
    enregistrer le script. Copier ce fichier dans `MyDocs` du N9, par exemple
    en utilisant temporairement le mode USB stockage de masse. Le script source
-   se trouve dans [`tools/n9/enable-usb-passwordless.sh`](../tools/n9/enable-usb-passwordless.sh).
+   se trouve dans [`tools/n9/enable-usb-passwordless.sh`](../../tools/n9/enable-usb-passwordless.sh).
 2. Ouvrir Terminal sur le N9, saisir `devel-su`, puis exécuter
    `sh /home/user/MyDocs/enable-usb-passwordless.sh`.
 3. Revenir au mode USB SDK, laisser SDK Connectivity actif, puis ouvrir

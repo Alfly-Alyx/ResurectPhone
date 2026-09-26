@@ -31,8 +31,8 @@ Les opérations sensibles devront toujours vérifier l’appareil, la compatibil
 Le gestionnaire Android recherche ADB dans une installation existante de Platform Tools et dans le futur dossier embarqué `tools/platform-tools`. Aucun binaire Google n’est actuellement redistribué dans le dépôt. La quantité de détails disponible dépend des restrictions de la version d’Android et du constructeur.
 
 La procédure et les limites Aegis des paquets Harmattan sont détaillées dans
-[`docs/N9-PACKAGE-MAINTENANCE.md`](docs/N9-PACKAGE-MAINTENANCE.md).
+[`docs/n9/package-maintenance.md`](docs/n9/package-maintenance.md).
 
 La recherche sur les noyaux du N9 et la préparation de l’appairage USB
 automatique sont détaillées dans
-[`docs/N9-KERNEL-ET-USB.md`](docs/N9-KERNEL-ET-USB.md).
+[`docs/n9/kernel-et-usb.md`](docs/n9/kernel-et-usb.md).
