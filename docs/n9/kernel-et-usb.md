@@ -107,23 +107,34 @@ Le serveur SSH d’origine annonce `publickey,password` et refuse `none`.
 ResurectPhone ne peut donc pas modifier cet état depuis un PC encore non
 autorisé. Une préparation unique depuis le Terminal du N9 est nécessaire.
 
-1. Dans ResurectPhone, ouvrir Nokia N9 puis choisir **Préparer USB** pour
-   enregistrer le script. Copier ce fichier dans `MyDocs` du N9, par exemple
-   en utilisant temporairement le mode USB stockage de masse. Le script source
-   se trouve dans [`tools/n9/enable-usb-passwordless.sh`](../../tools/n9/enable-usb-passwordless.sh).
-2. Ouvrir Terminal sur le N9, saisir `devel-su`, puis exécuter
-   `sh /home/user/MyDocs/enable-usb-passwordless.sh`.
-3. Revenir au mode USB SDK, laisser SDK Connectivity actif, puis ouvrir
-   ResurectPhone sur un PC connecté par câble. Le logiciel détecte le N9,
-   vérifie Harmattan, installe une clé propre à ce PC et lit son identité.
+1. Ouvrir ResurectPhone avec le N9 branché. Si SSH refuse l'accès sans mot de
+   passe, choisir temporairement le mode **stockage USB** sur le N9.
+   ResurectPhone reconnaît le lecteur `Nokia N9` et dépose directement
+   `resurectphone-usb-setup.sh` dans `MyDocs/ResurectPhone`, sans demande de chemin
+   ni confirmation sur le PC. Si le fichier existe déjà avec un contenu
+   différent, il n'est pas écrasé. Le bouton **Préparer USB** reste disponible
+   pour l'enregistrer manuellement lorsque le stockage du N9 n'est pas reconnu.
+   Le script source se trouve dans
+   [`tools/n9/enable-usb-passwordless.sh`](../../tools/n9/enable-usb-passwordless.sh).
+2. Revenir au mode **SDK** sur le N9. Dans Terminal, saisir une seule fois
+   `devel-su`, puis exécuter
+   `sh /home/user/MyDocs/ResurectPhone/resurectphone-usb-setup.sh`.
+3. Laisser SDK Connectivity actif. ResurectPhone retente l'accès, vérifie
+   Harmattan, installe une clé propre au PC et lit l'identité du téléphone.
+   Pour les PC suivants, ouvrir ResurectPhone et brancher le N9 en USB SDK :
+   l'appairage se fait sans saisie ni confirmation côté PC.
 
 Le script sauvegarde `/etc/ssh/sshd_config` et `/etc/shadow` sous
 `/var/tmp/resurectphone-ssh-*`, vérifie la configuration avec `sshd -t`, puis
 autorise le compte `developer` sans mot de passe pour une adresse du sous-réseau
-USB `192.168.2.0/24`. L’adresse habituelle du PC est `192.168.2.14`, mais la
+USB `192.168.2.0/24`. OpenSSH 5.1 ne permet pas de placer
+`PermitEmptyPasswords` dans une règle `Match` : le script l'active globalement,
+vérifie d'abord qu'aucun autre compte n'a de mot de passe vide et désactive
+l'authentification par mot de passe du compte `developer` hors de ce sous-réseau.
+Il peut être relancé si SDK Connectivity remet un mot de passe au compte
+`developer`. L’adresse habituelle du PC est `192.168.2.14`, mais la
 [documentation Nokia du SDK](https://n9.dy.fi/meego/html/guide/html/Developer_Library_Getting_started_with_Harmattan_using_Qt_SDK_Connecting_the_device_to_Qt_SDK.html)
-permet d’en choisir une autre dans ce sous-réseau. Les adresses extérieures
-gardent `PermitEmptyPasswords no`. Le serveur SSH ancien du N9 ne permet pas de
+permet d’en choisir une autre dans ce sous-réseau. Le serveur SSH ancien du N9 ne permet pas de
 restreindre cette règle par interface : un hôte sur un autre réseau utilisant
 aussi une adresse `192.168.2.x` pourrait en bénéficier. Tout PC ayant accès à
 cette liaison USB peut obtenir une session `developer`. Le mot de passe administrateur
@@ -136,8 +147,10 @@ redémarrer le serveur SSH ou le téléphone. Cette sauvegarde contient
 
 Le 26 septembre 2026, le N9 branché répondait sur SSH (`192.168.2.15:22`),
 mais refusait encore une connexion `developer` sans authentification. La
-syntaxe du script a été vérifiée localement pour la règle `192.168.2.0/24` ;
-ResurectPhone se compile avec ce script intégré et ses 25 tests passent.
+syntaxe shell du script a été vérifiée localement et sa configuration SSH suit
+les directives documentées pour OpenSSH 5.1 ; seul `sshd -t` exécuté sur le N9
+confirmera sa compatibilité réelle. ResurectPhone se compile avec ce script
+intégré et ses 28 tests passent.
 
 La préparation n’a pas encore été exécutée sur le N9. Après son exécution,
 tester l’appairage automatique depuis ce PC puis depuis un second PC en mode

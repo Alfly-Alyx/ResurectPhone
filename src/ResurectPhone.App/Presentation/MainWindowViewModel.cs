@@ -7,6 +7,7 @@ using ResurectPhone.Core.Devices;
 using ResurectPhone.Core.Discovery;
 using ResurectPhone.Core.NokiaN9;
 using ResurectPhone.Core.Recovery;
+using ResurectPhone.Infrastructure.Windows.NokiaN9;
 
 namespace ResurectPhone.App.Presentation;
 
@@ -36,6 +37,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private bool _isConnectingN9;
     private bool _isAutoDiscoveringN9;
     private bool _n9Identified;
+    private bool _n9SetupPending;
+    private bool _n9SetupStaged;
     private bool _autoOpenedN9;
     private DateTime _lastN9AutoAttemptUtc = DateTime.MinValue;
     private string? _androidSerial;
@@ -99,9 +102,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OpenWindowsPhoneCommand = new RelayCommand(() => OpenFamily(_windowsPhoneSections));
         OpenAndroidCommand = new RelayCommand(() => OpenFamily(_androidSections));
         ScanCommand = new AsyncRelayCommand(ScanAsync, () => !IsScanning);
-        ConnectN9Command = new AsyncRelayCommand(() => ConnectN9Async(false), () => !IsConnectingN9);
+        ConnectN9Command = new AsyncRelayCommand(ConnectN9Async, () => !IsConnectingN9);
         ForgetN9PairingCommand = new RelayCommand(ForgetN9Pairing, () => CanForgetN9Pairing);
-        PrepareN9UsbCommand = new RelayCommand(() => _n9PairingInteraction.ExportUsbSetupScript());
+        PrepareN9UsbCommand = new RelayCommand(PrepareN9Usb);
         ToggleAndroidMonitoringCommand = new RelayCommand(
             ToggleAndroidMonitoring,
             () => !IsScanning && !IsReleasingMemory);
@@ -319,15 +322,23 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             if (!IsHome && !IsN9Family)
                 return;
             var n9 = phones.FirstOrDefault(phone => phone.Platform == PhonePlatform.MeeGoHarmattan);
+            var stageStatus = N9UsbSetupStageStatus.Unavailable;
+            if ((_n9SetupPending || (n9 is not null && !_n9Connection.HasPairing)) && !_n9SetupStaged)
+                stageStatus = TryStageN9Setup();
             if (n9 is null)
             {
                 _n9Identified = false;
                 _lastN9AutoAttemptUtc = DateTime.MinValue;
+                if (_n9SetupStaged)
+                    return;
                 if (IsN9Family && _connectedPhone?.Platform == PhonePlatform.MeeGoHarmattan)
                 {
                     _connectedPhone = null;
-                    ConnectionTitle = "Nokia N9 déconnecté";
-                    ConnectionDetail = "Rebranchez le câble USB pour rétablir la liaison.";
+                    if (!_n9SetupPending)
+                    {
+                        ConnectionTitle = "Nokia N9 déconnecté";
+                        ConnectionDetail = "Rebranchez le câble USB pour rétablir la liaison.";
+                    }
                     RefreshFeatures();
                 }
                 else if (IsHome && _connectedPhone?.Platform == PhonePlatform.MeeGoHarmattan)
@@ -346,6 +357,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             if (_n9Identified)
                 return;
 
+            if (stageStatus is N9UsbSetupStageStatus.Conflict or N9UsbSetupStageStatus.Error)
+                return;
+
+            if (_n9SetupStaged &&
+                _n9PairingInteraction.TryStageUsbSetupScript().Status == N9UsbSetupStageStatus.Ready)
+                return;
+
             if (_connectedPhone?.Platform != PhonePlatform.MeeGoHarmattan)
             {
                 _connectedPhone = n9;
@@ -358,7 +376,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 return;
 
             _lastN9AutoAttemptUtc = DateTime.UtcNow;
-            await ConnectN9Async(true);
+            await ConnectN9Async();
         }
         catch (Exception)
         {
@@ -518,10 +536,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
-    private async Task ConnectN9Async(bool automatic)
+    private async Task ConnectN9Async()
     {
-        var previousTitle = ConnectionTitle;
-        var previousDetail = ConnectionDetail;
         IsConnectingN9 = true;
         try
         {
@@ -540,27 +556,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     ConnectionDetail = "Vérification de l’identité du N9 et création d’une clé propre à ce PC.";
                     status = await _n9Connection.PairWithoutPasswordAsync();
                 }
-                catch (N9AuthenticationRequiredException) when (automatic)
-                {
-                    ConnectionTitle = "Préparation du N9 nécessaire";
-                    ConnectionDetail = "Le N9 exige encore un mot de passe. Activez une fois l’accès USB sans mot de passe sur le téléphone.";
-                    return;
-                }
                 catch (N9AuthenticationRequiredException)
                 {
-                    var password = _n9PairingInteraction.RequestTemporaryPassword();
-                    if (password is null)
+                    _n9SetupPending = true;
+                    if (!_n9SetupStaged)
                     {
-                        ConnectionTitle = previousTitle;
-                        ConnectionDetail = previousDetail;
-                        return;
+                        ConnectionTitle = "Préparation du N9 nécessaire";
+                        ConnectionDetail = "Choisissez le mode stockage USB sur le N9. ResurectPhone y déposera automatiquement le fichier de préparation.";
+                        TryStageN9Setup();
                     }
-
-                    ConnectionTitle = "Appairage du Nokia N9…";
-                    ConnectionDetail = "Connexion au compte developer et vérification de l’identité du téléphone.";
-                    status = await _n9Connection.PairAsync(
-                        password,
-                        _n9PairingInteraction.ConfirmHostKey);
+                    else
+                    {
+                        ShowN9SetupInstructions();
+                    }
+                    return;
                 }
             }
 
@@ -587,16 +596,28 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             ConnectionTitle = _connectedPhone.DisplayName;
             ConnectionDetail = DescribeN9(_connectedPhone, details);
             _n9Identified = true;
+            _n9SetupPending = false;
+            _n9SetupStaged = false;
         }
         catch (N9ConnectionException exception)
         {
-            ConnectionTitle = "Connexion au N9 impossible";
-            ConnectionDetail = exception.Message;
+            if (_n9SetupStaged)
+                ShowN9SetupInstructions();
+            else
+            {
+                ConnectionTitle = "Connexion au N9 impossible";
+                ConnectionDetail = exception.Message;
+            }
         }
         catch (Exception)
         {
-            ConnectionTitle = "Connexion au N9 interrompue";
-            ConnectionDetail = "ResurectPhone n’a pas pu lire le téléphone. Vérifiez SDK Connectivity et reconnectez le câble USB.";
+            if (_n9SetupStaged)
+                ShowN9SetupInstructions();
+            else
+            {
+                ConnectionTitle = "Connexion au N9 interrompue";
+                ConnectionDetail = "ResurectPhone n’a pas pu lire le téléphone. Vérifiez SDK Connectivity et reconnectez le câble USB.";
+            }
         }
         finally
         {
@@ -606,6 +627,50 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             ForgetN9PairingCommand.RaiseCanExecuteChanged();
             RefreshFeatures();
         }
+    }
+
+    private N9UsbSetupStageStatus TryStageN9Setup()
+    {
+        var result = _n9PairingInteraction.TryStageUsbSetupScript();
+        switch (result.Status)
+        {
+            case N9UsbSetupStageStatus.Ready:
+                _n9SetupPending = true;
+                _n9SetupStaged = true;
+                _lastN9AutoAttemptUtc = DateTime.MinValue;
+                ShowN9SetupInstructions();
+                break;
+            case N9UsbSetupStageStatus.Conflict:
+                ConnectionTitle = "Fichier de préparation déjà présent";
+                ConnectionDetail = "Le N9 contient un fichier différent avec le même nom. Retirez-le ou utilisez Préparer USB pour enregistrer le nouveau fichier ailleurs.";
+                break;
+            case N9UsbSetupStageStatus.Error:
+                ConnectionTitle = "Copie sur le N9 impossible";
+                ConnectionDetail = "Le stockage USB du N9 est inaccessible. Réessayez ou utilisez Préparer USB.";
+                break;
+        }
+
+        return result.Status;
+    }
+
+    private void ShowN9SetupInstructions()
+    {
+        ConnectionTitle = "Préparation copiée sur le N9";
+        ConnectionDetail = "Revenez au mode SDK. Dans Terminal, lancez devel-su puis sh /home/user/MyDocs/ResurectPhone/resurectphone-usb-setup.sh. La connexion reprendra seule.";
+    }
+
+    private void PrepareN9Usb()
+    {
+        _n9SetupPending = true;
+        var result = _n9PairingInteraction.TryStageUsbSetupScript();
+        if (result.Status == N9UsbSetupStageStatus.Ready)
+        {
+            _n9SetupStaged = true;
+            ShowN9SetupInstructions();
+            return;
+        }
+
+        _n9PairingInteraction.ExportUsbSetupScript();
     }
 
     private void ForgetN9Pairing()

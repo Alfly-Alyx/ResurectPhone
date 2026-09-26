@@ -3,6 +3,7 @@ using System.Windows;
 using Microsoft.Win32;
 using ResurectPhone.App.Presentation;
 using ResurectPhone.Core.NokiaN9;
+using ResurectPhone.Infrastructure.Windows.NokiaN9;
 
 namespace ResurectPhone.App.Dialogs;
 
@@ -36,17 +37,20 @@ public sealed class N9PairingInteraction(Func<Window?> ownerProvider) : IN9Pairi
 
     public bool ConfirmForgetPairing() => MessageBox.Show(
         ownerProvider(),
-        "ResurectPhone supprimera de ce PC la clé et l’empreinte enregistrées pour le N9. Vous devrez utiliser de nouveau le mot de passe de SDK Connectivity pour l’appairer.",
+        "ResurectPhone supprimera de ce PC la clé et l’empreinte enregistrées pour le N9. Il créera une nouvelle liaison lorsque le N9 sera reconnecté en USB.",
         "Oublier la liaison N9",
         MessageBoxButton.YesNo,
         MessageBoxImage.Warning,
         MessageBoxResult.No) == MessageBoxResult.Yes;
 
+    public N9UsbSetupStageResult TryStageUsbSetupScript() =>
+        N9UsbSetupStager.TryStage(ReadUsbSetupScript());
+
     public void ExportUsbSetupScript()
     {
         var dialog = new SaveFileDialog
         {
-            FileName = "enable-usb-passwordless.sh",
+            FileName = N9UsbSetupStager.FileName,
             Filter = "Script N9 (*.sh)|*.sh",
             AddExtension = true,
             OverwritePrompt = true
@@ -54,19 +58,25 @@ public sealed class N9PairingInteraction(Func<Window?> ownerProvider) : IN9Pairi
         if (dialog.ShowDialog(ownerProvider()) != true)
             return;
 
-        using var source = typeof(N9PairingInteraction).Assembly.GetManifestResourceStream(
-            "ResurectPhone.N9UsbSetup") ?? throw new InvalidOperationException(
-            "Le script de préparation USB est absent de l’application.");
-        using (var destination = File.Create(dialog.FileName))
-            source.CopyTo(destination);
+        File.WriteAllBytes(dialog.FileName, ReadUsbSetupScript());
 
         MessageBox.Show(
             ownerProvider(),
-            "Copiez ce fichier dans MyDocs du N9 en mode stockage USB. Sur le N9, ouvrez Terminal, lancez devel-su, puis saisissez :\n" +
-            "sh /home/user/MyDocs/enable-usb-passwordless.sh\n\n" +
+            "Copiez ce fichier dans MyDocs/ResurectPhone du N9 en mode stockage USB. Sur le N9, ouvrez Terminal, lancez devel-su, puis saisissez :\n" +
+            "sh /home/user/MyDocs/ResurectPhone/resurectphone-usb-setup.sh\n\n" +
             "Revenez au mode USB SDK. ResurectPhone se connectera automatiquement.",
             "Préparer l’accès USB du N9",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
+    }
+
+    private static byte[] ReadUsbSetupScript()
+    {
+        using var source = typeof(N9PairingInteraction).Assembly.GetManifestResourceStream(
+            "ResurectPhone.N9UsbSetup") ?? throw new InvalidOperationException(
+            "Le script de préparation USB est absent de l’application.");
+        using var destination = new MemoryStream();
+        source.CopyTo(destination);
+        return destination.ToArray();
     }
 }

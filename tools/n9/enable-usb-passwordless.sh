@@ -19,9 +19,25 @@ if ! id developer >/dev/null 2>&1; then
 fi
 configured=0
 if grep -q 'ResurectPhone USB sans mot de passe' "$config"; then
-    configured=1
+    if grep -q '^PermitEmptyPasswords yes$' "$config" &&
+       grep -q '^Match User developer Address 192.168.2.0/24$' "$config" &&
+       grep -q '^Match User developer Address \*,!192.168.2.0/24$' "$config"; then
+        configured=1
+    else
+        echo "Une ancienne préparation ResurectPhone existe : vérification manuelle nécessaire." >&2
+        exit 1
+    fi
 elif grep -q '^[[:space:]]*Match[[:space:]]' "$config"; then
     echo "La configuration SSH contient déjà des règles Match : vérification manuelle nécessaire." >&2
+    exit 1
+fi
+
+# OpenSSH 5.1 n'accepte pas PermitEmptyPasswords dans Match. Vérifier qu'aucun
+# autre compte n'a de mot de passe vide avant de l'autoriser globalement.
+if awk -F: '$2 == "" && $1 != "developer" { found=1 } END { exit found ? 1 : 0 }' /etc/shadow; then
+    :
+else
+    echo "Un autre compte sans mot de passe existe : aucune modification effectuée." >&2
     exit 1
 fi
 
@@ -34,12 +50,14 @@ cp -p /etc/shadow "$backup/shadow"
 temporary="$backup/sshd_config.new"
 if [ "$configured" = 0 ]; then
     {
-        printf '%s\n' 'PermitEmptyPasswords no'
+        printf '%s\n' 'PermitEmptyPasswords yes'
         cat "$config"
         printf '\n%s\n' '# ResurectPhone USB sans mot de passe'
         printf '%s\n' 'Match User developer Address 192.168.2.0/24'
         printf '%s\n' '    PasswordAuthentication yes'
-        printf '%s\n' '    PermitEmptyPasswords yes'
+        printf '%s\n' 'Match User developer Address *,!192.168.2.0/24'
+        printf '%s\n' '    PasswordAuthentication no'
+        printf '%s\n' '    KbdInteractiveAuthentication no'
     } > "$temporary"
 else
     cp -p "$config" "$temporary"
@@ -65,5 +83,5 @@ if [ -s /var/run/sshd.pid ]; then
 fi
 
 echo "Accès developer sans mot de passe autorisé depuis le réseau USB (192.168.2.0/24)."
-echo "Les autres adresses gardent PermitEmptyPasswords no. Sauvegarde : $backup"
+echo "Le compte developer n'accepte pas de mot de passe hors du sous-réseau USB. Sauvegarde : $backup"
 echo "Branchez le N9 à un PC et ouvrez ResurectPhone pour créer automatiquement sa clé."
