@@ -8,7 +8,7 @@ using ResurectPhone.Core.NokiaN9;
 
 namespace ResurectPhone.Infrastructure.Windows.NokiaN9;
 
-public sealed class N9SshConnectionService : IN9ConnectionService
+public sealed partial class N9SshConnectionService : IN9ConnectionService
 {
     public const string DefaultUsbHost = "192.168.2.15";
     public const int DefaultPort = 22;
@@ -360,7 +360,7 @@ public sealed class N9SshConnectionService : IN9ConnectionService
             "umask 077; key='" + publicKey + "'; file=\"$HOME/.ssh/authorized_keys2\"; " +
             "mkdir -p \"$HOME/.ssh\" && chmod 700 \"$HOME/.ssh\" && " +
             "touch \"$file\" && chmod 600 \"$file\" && " +
-            "{ grep -qxF \"$key\" \"$file\" || printf '%s\\n' \"$key\" >> \"$file\"; }");
+            "{ grep -qF \"$key\" \"$file\" || printf '%s\\n' \"$key\" >> \"$file\"; }");
         command.CommandTimeout = OperationTimeout;
         await command.ExecuteAsync(cancellationToken);
         if (command.ExitStatus is not 0)

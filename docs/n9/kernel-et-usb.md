@@ -1,10 +1,10 @@
 # Nokia N9 : noyau et appairage USB
 
-État du N9 vérifié le 25 septembre 2026 ; dépôts GitHub revérifiés le
-26 septembre 2026. Le N9 connecté répond sur l’interface USB
-`192.168.2.15`, mais refuse actuellement l’authentification SSH sans clé ou mot
-de passe. ResurectPhone n’a donc pas encore pu lire sa version exacte avec
-`uname -r`.
+État du N9 et dépôts GitHub vérifiés le 26 septembre 2026. Le téléphone est un
+N9 RM-696 sous `DFL61_HARMATTAN_40.2012.21-3_PR_005`, avec le noyau
+`2.6.32.54-dfl61-20121301` (ARMv7), relevés par SSH. L’accès USB sans mot de
+passe et la préparation depuis le moteur ResurectPhone ont été testés sur ce
+téléphone. Aucun noyau n’a été installé.
 
 ## Résultat de la recherche du noyau
 
@@ -103,58 +103,90 @@ numéro de version.
 
 ## Accès USB automatique depuis tout PC
 
-Le serveur SSH d’origine annonce `publickey,password` et refuse `none`.
-ResurectPhone ne peut donc pas modifier cet état depuis un PC encore non
-autorisé. Une préparation unique depuis le Terminal du N9 est nécessaire.
+### Parcours utilisateur
 
-1. Ouvrir ResurectPhone avec le N9 branché. Si SSH refuse l'accès sans mot de
-   passe, choisir temporairement le mode **stockage USB** sur le N9.
-   ResurectPhone reconnaît le lecteur `Nokia N9` et dépose directement
-   `resurectphone-usb-setup.sh` dans `MyDocs/ResurectPhone`, sans demande de chemin
-   ni confirmation sur le PC. Si le fichier existe déjà avec un contenu
-   différent, il n'est pas écrasé. Le bouton **Préparer USB** reste disponible
-   pour l'enregistrer manuellement lorsque le stockage du N9 n'est pas reconnu.
-   Le script source se trouve dans
-   [`tools/n9/enable-usb-passwordless.sh`](../../tools/n9/enable-usb-passwordless.sh).
-2. Revenir au mode **SDK** sur le N9. Dans Terminal, saisir une seule fois
-   `devel-su`, puis exécuter
-   `sh /home/user/MyDocs/ResurectPhone/resurectphone-usb-setup.sh`.
-3. Laisser SDK Connectivity actif. ResurectPhone retente l'accès, vérifie
-   Harmattan, installe une clé propre au PC et lit l'identité du téléphone.
-   Pour les PC suivants, ouvrir ResurectPhone et brancher le N9 en USB SDK :
-   l'appairage se fait sans saisie ni confirmation côté PC.
+1. Brancher le N9 en mode USB SDK. ResurectPhone essaie sa clé enregistrée,
+   puis l’accès sans authentification sur un téléphone encore inconnu.
+2. Sur un N9 d’origine qui refuse cet accès, saisir une seule fois le mot de
+   passe temporaire affiché par SDK Connectivity. Une clé propre au PC est
+   installée et protégée par le compte Windows ; le mot de passe SDK n’est
+   pas conservé. Le branchement d’un N9 reconnu en USB autorise cet appairage.
+3. ResurectPhone essaie automatiquement le mot de passe administrateur
+   d’origine `rootme` avec `devel-su`. Il ne demande un mot de passe
+   personnalisé que si celui d’origine est refusé. Cette priorité est conservée
+   à chaque tentative. Les secrets passent par l’entrée standard et leurs
+   buffers sont effacés ; aucun mot de passe personnalisé n’est enregistré.
+4. L’application transfère et lance la préparation par SSH, installe le
+   compagnon `resurectphone-n9`, puis ouvre une autre connexion sans clé ni
+   mot de passe pour vérifier le résultat. Elle enregistre aussi le mode
+   `windows_network` dans `/Meego/System/UsbMode`.
+5. Les prochains PC peuvent s’appairer sans saisie sur cette liaison USB.
+   Le bouton **Préparer USB** relance la vérification et la préparation.
 
-Le script sauvegarde `/etc/ssh/sshd_config` et `/etc/shadow` sous
-`/var/tmp/resurectphone-ssh-*`, vérifie la configuration avec `sshd -t`, puis
-autorise le compte `developer` sans mot de passe pour une adresse du sous-réseau
-USB `192.168.2.0/24`. OpenSSH 5.1 ne permet pas de placer
-`PermitEmptyPasswords` dans une règle `Match` : le script l'active globalement,
-vérifie d'abord qu'aucun autre compte n'a de mot de passe vide et désactive
-l'authentification par mot de passe du compte `developer` hors de ce sous-réseau.
-Il peut être relancé si SDK Connectivity remet un mot de passe au compte
-`developer`. L’adresse habituelle du PC est `192.168.2.14`, mais la
-[documentation Nokia du SDK](https://n9.dy.fi/meego/html/guide/html/Developer_Library_Getting_started_with_Harmattan_using_Qt_SDK_Connecting_the_device_to_Qt_SDK.html)
-permet d’en choisir une autre dans ce sous-réseau. Le serveur SSH ancien du N9 ne permet pas de
-restreindre cette règle par interface : un hôte sur un autre réseau utilisant
-aussi une adresse `192.168.2.x` pourrait en bénéficier. Tout PC ayant accès à
-cette liaison USB peut obtenir une session `developer`. Le mot de passe administrateur
-utilisé par `devel-su` n’est pas modifié.
+Si aucun premier accès SSH n’est possible, le repli par stockage USB reste
+disponible : copie dans `MyDocs/ResurectPhone`, puis lancement unique depuis
+Terminal avec `devel-su`. Ce repli n’est pas nécessaire quand SSH fonctionne.
+Le script autonome est
+[`tools/n9/enable-usb-passwordless.sh`](../../tools/n9/enable-usb-passwordless.sh).
 
-Pour annuler la préparation, depuis `devel-su` sur le N9, restaurer les deux
-fichiers conservés dans le dossier de sauvegarde affiché par le script, puis
-redémarrer le serveur SSH ou le téléphone. Cette sauvegarde contient
-`/etc/shadow` : elle doit rester privée.
+### Persistance et Aegis
 
-Le 26 septembre 2026, le N9 branché répondait sur SSH (`192.168.2.15:22`),
-mais refusait encore une connexion `developer` sans authentification. La
-syntaxe shell du script a été vérifiée localement et sa configuration SSH suit
-les directives documentées pour OpenSSH 5.1 ; seul `sshd -t` exécuté sur le N9
-confirmera sa compatibilité réelle. ResurectPhone se compile avec ce script
-intégré et ses 28 tests passent.
+SDK Connectivity génère des mots de passe et son option de suppression
+verrouille le compte avec `*` au lieu de lui donner un mot de passe vide.
+Le compagnon surveille les changements de `/etc/passwd` et `/etc/shadow`
+avec `inotifywait`, puis rétablit le mot de passe vide de `developer`. Il ne
+fait pas de scrutation périodique. Le service Upstart démarre avec SSH.
+L’écran Nokia peut encore afficher un mot de passe : le réglage porte sur
+l’authentification réelle du compte, pas sur le texte de cette application.
 
-La préparation n’a pas encore été exécutée sur le N9. Après son exécution,
-tester l’appairage automatique depuis ce PC puis depuis un second PC en mode
-USB SDK, lire `uname -r`, et confirmer après fermeture de SDK Connectivity et
-redémarrage du téléphone que le compte `developer` reste sans mot de passe.
-Si SDK Connectivity le rétablit, la préparation devra être adaptée avant de
-présenter l’appairage universel comme validé.
+Modifier directement le script Nokia `password.sh` empêche son exécution
+par Aegis ; écrire directement le service dans `/etc/init` est aussi refusé.
+Le compagnon utilise donc un paquet Debian dédié, avec ses empreintes
+`digsigsums`, installé par `dpkg`. Le script Nokia conserve son empreinte
+d’origine. Le format des empreintes suit les outils SDK ; il ne constitue
+pas une signature Nokia. La
+[documentation Aegis](https://katastrophos.net/harmattan-dev/html/guide/html/Developer_Library_Developing_for_Harmattan_Harmattan_security_Security_guide_Harmattan_security_FAQ.html)
+décrit la protection de ces fichiers et l’installation par paquet.
+
+### Portée et restauration
+
+La préparation sauvegarde la configuration SSH et les comptes sous
+`/var/lib/resurectphone/backups/usb-<date>-<pid>`, en accès root uniquement.
+Le N9 testé stocke les mots de passe dans `/etc/passwd`, sans fichier shadow.
+Les noms de sauvegarde utilisent l’horloge du N9, qui affichait août 2013.
+
+OpenSSH 5.1 accepte `PermitEmptyPasswords` uniquement au niveau global.
+Le script vérifie d’abord qu’aucun autre compte n’a un mot de passe vide,
+interdit SSH root et n’autorise le mot de passe de `developer` que depuis
+`192.168.2.0/24`. Hors de ce sous-réseau, les méthodes password et
+keyboard-interactive sont désactivées pour ce compte. La configuration est
+validée sur le téléphone avec `sshd -t` et `sshd -T` avant application.
+Cette restriction porte sur l’adresse source : un autre réseau utilisant
+également `192.168.2.x` pourrait en bénéficier. Tout PC sur la liaison USB
+obtient une session `developer`. Le mot de passe de `devel-su` reste inchangé.
+
+Pour revenir au réglage sauvegardé, lancer en administrateur
+`sh <dossier-de-sauvegarde>/restore.sh`. Le service est arrêté, la configuration
+SSH et le mot de passe de `developer` sont rétablis ; les autres comptes sont
+préservés. Le compagnon reste installé mais inactif après une restauration de
+la configuration initiale. L’installation tente cette restauration si elle
+échoue après le début des modifications. La sauvegarde contient des secrets
+et reste exclusivement sur le téléphone.
+
+### Essais matériels du 26 septembre 2026
+
+- Première connexion SDK puis reconnexion par clé enregistrée : réussies.
+- Installation et vérification depuis le moteur ResurectPhone, avec le mot
+  de passe administrateur d’origine essayé automatiquement : réussies.
+- Nouvelle connexion sans clé ni mot de passe : réussie.
+- Verrouillage du compte par `usermod -p '*' developer`, comme le fait SDK
+  Connectivity, puis retour automatique à un mot de passe vide : réussi.
+- Redémarrage du service, restauration puis réinstallation : réussis.
+- Redémarrage complet du N9 : reconnexion sans mot de passe réussie, mode
+  USB conservé et service démarré automatiquement. Un nouveau verrouillage
+  du compte après démarrage est corrigé, puis la connexion anonyme réussit.
+- Reconnaissance de la configuration existante sans réinstallation : réussie.
+- Compilation WPF : aucune erreur ni avertissement ; 32 tests réussis.
+
+Le test avec un second PC physique reste à effectuer ; la connexion neuve
+utilisée pour la vérification n’avait aucune clé ni aucun mot de passe.

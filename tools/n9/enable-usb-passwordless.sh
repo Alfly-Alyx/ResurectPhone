@@ -1,87 +1,203 @@
 #!/bin/sh
-# Run once as root on a Nokia N9 after enabling Developer mode and USB SDK.
+# ResurectPhone: persistent passwordless developer access on the N9 USB subnet.
 set -eu
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+LC_ALL=C
+export PATH LC_ALL
 
-if [ "$(id -u)" != 0 ]; then
-    echo "Ouvrez Terminal sur le N9, lancez devel-su, puis relancez ce script." >&2
-    exit 1
-fi
-
+test "$(id -u)" = 0 || { echo "Les droits administrateur du N9 sont nécessaires." >&2; exit 1; }
 config=/etc/ssh/sshd_config
 sshd=/usr/sbin/sshd
-if [ ! -f "$config" ] || [ ! -x "$sshd" ]; then
-    echo "Le serveur SSH du mode développeur est introuvable." >&2
+work=/var/lib/resurectphone
+test -f "$config"
+test -x "$sshd"
+command -v inotifywait >/dev/null 2>&1 || {
+    echo "L'outil inotifywait est nécessaire pour conserver le réglage USB." >&2
     exit 1
-fi
-if ! id developer >/dev/null 2>&1; then
-    echo "Le compte developer est introuvable." >&2
-    exit 1
-fi
+}
+id developer >/dev/null 2>&1
+
 configured=0
-if grep -q 'ResurectPhone USB sans mot de passe' "$config"; then
-    if grep -q '^PermitEmptyPasswords yes$' "$config" &&
-       grep -q '^Match User developer Address 192.168.2.0/24$' "$config" &&
-       grep -q '^Match User developer Address \*,!192.168.2.0/24$' "$config"; then
-        configured=1
-    else
-        echo "Une ancienne préparation ResurectPhone existe : vérification manuelle nécessaire." >&2
-        exit 1
-    fi
-elif grep -q '^[[:space:]]*Match[[:space:]]' "$config"; then
-    echo "La configuration SSH contient déjà des règles Match : vérification manuelle nécessaire." >&2
+if grep -q '^# ResurectPhone USB access v4$' "$config"; then
+    configured=1
+elif grep -qi '^[[:space:]]*Match[[:space:]]' "$config"; then
+    echo "Des règles SSH personnalisées existent : vérification nécessaire." >&2
     exit 1
 fi
 
-# OpenSSH 5.1 n'accepte pas PermitEmptyPasswords dans Match. Vérifier qu'aucun
-# autre compte n'a de mot de passe vide avant de l'autoriser globalement.
-if awk -F: '$2 == "" && $1 != "developer" { found=1 } END { exit found ? 1 : 0 }' /etc/shadow; then
-    :
-else
-    echo "Un autre compte sans mot de passe existe : aucune modification effectuée." >&2
+# Harmattan stores the developer password in passwd; some variants use shadow.
+accounts=/etc/passwd
+if [ -f /etc/shadow ]; then accounts="$accounts /etc/shadow"; fi
+if ! awk -F: '$2 == "" && $1 != "developer" { found=1 } END { exit found ? 1 : 0 }' $accounts; then
+    echo "Un autre compte possède un mot de passe vide : aucune modification effectuée." >&2
     exit 1
 fi
 
-backup="/var/tmp/resurectphone-ssh-$(date +%Y%m%d%H%M%S)"
 umask 077
+mkdir -p "$work/backups"
+backup="$work/backups/usb-$(date +%Y%m%d%H%M%S)-$$"
 mkdir "$backup"
 cp -p "$config" "$backup/sshd_config"
-cp -p /etc/shadow "$backup/shadow"
+cp -p /etc/passwd "$backup/passwd"
+if [ -f /etc/shadow ]; then cp -p /etc/shadow "$backup/shadow"; fi
+if [ -f "$work/usb-enabled" ]; then touch "$backup/was-enabled"; fi
 
-temporary="$backup/sshd_config.new"
+cat > "$backup/restore.sh" <<'RESTORE'
+#!/bin/sh
+set -eu
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+export PATH
+cd "$(dirname "$0")"
+initctl stop resurectphone-usb-access >/dev/null 2>&1 || true
+cp -p ./sshd_config /etc/ssh/sshd_config
+rm -f /var/lib/resurectphone/usb-enabled
+# Restore only developer's password, preserving changes to other accounts.
+restore_password() {
+    awk -F: 'NR == FNR { if ($1 == "developer") password=$2; next }
+        { if ($1 == "developer") $2=password; print }' OFS=: "$1" "$2" > ./account.restore
+    cat ./account.restore > "$2"
+    rm -f ./account.restore
+}
+restore_password ./passwd /etc/passwd
+if [ -f ./shadow ]; then restore_password ./shadow /etc/shadow; fi
+if [ -f ./was-enabled ]; then
+    touch /var/lib/resurectphone/usb-enabled
+    initctl start resurectphone-usb-access
+fi
+sshd -t
+if [ -s /var/run/sshd.pid ]; then kill -HUP "$(cat /var/run/sshd.pid)"; fi
+echo "Configuration USB précédente restaurée."
+RESTORE
+chmod 700 "$backup/restore.sh"
+
 if [ "$configured" = 0 ]; then
     {
-        printf '%s\n' 'PermitEmptyPasswords yes'
+        # OpenSSH 5.1 only accepts PermitEmptyPasswords in the global section.
+        printf '%s\n' 'PermitEmptyPasswords yes' 'PermitRootLogin no'
         cat "$config"
-        printf '\n%s\n' '# ResurectPhone USB sans mot de passe'
+        printf '\n%s\n' '# ResurectPhone USB access v4'
         printf '%s\n' 'Match User developer Address 192.168.2.0/24'
         printf '%s\n' '    PasswordAuthentication yes'
         printf '%s\n' 'Match User developer Address *,!192.168.2.0/24'
         printf '%s\n' '    PasswordAuthentication no'
         printf '%s\n' '    KbdInteractiveAuthentication no'
-    } > "$temporary"
+    } > "$backup/sshd_config.new"
 else
-    cp -p "$config" "$temporary"
+    cp -p "$config" "$backup/sshd_config.new"
 fi
 
-if ! "$sshd" -t -f "$temporary"; then
-    echo "Configuration SSH refusée. Le N9 n’a pas été modifié." >&2
-    exit 1
-fi
+cat > "$backup/watcher.new" <<'WATCHER'
+#!/bin/sh
+set -eu
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+LC_ALL=C
+export PATH LC_ALL
+test -f /var/lib/resurectphone/usb-enabled || exit 0
+ensure_empty() {
+    storage=/etc/passwd
+    if [ -f /etc/shadow ] &&
+       awk -F: '$1 == "developer" && $2 == "x" { found=1 } END { exit found ? 0 : 1 }' /etc/passwd; then
+        storage=/etc/shadow
+    fi
+    if ! awk -F: '$1 == "developer" && $2 == "" { empty=1 } END { exit empty ? 0 : 1 }' "$storage"; then
+        passwd -d developer >/dev/null
+    fi
+}
+ensure_empty
+# The startup event closes the race between the first check and watch setup.
+# No polling: the process sleeps until SDK changes an account file.
+inotifywait -m -e close_write,moved_to,create --format '%f' /etc 2>&1 |
+while IFS= read -r event; do
+    case "$event" in
+        'Watches established.'|passwd|shadow) ensure_empty ;;
+    esac
+done
+# Let Upstart restart the watcher if its event stream ends.
+exit 1
+WATCHER
 
-if [ "$configured" = 0 ]; then
-    cp -p "$temporary" "$config"
-fi
-if ! passwd -d developer; then
-    cp -p "$backup/sshd_config" "$config"
-    cp -p "$backup/shadow" /etc/shadow
-    echo "Impossible de retirer le mot de passe developer : configuration restaurée." >&2
-    exit 1
-fi
+cat > "$backup/job.new" <<'JOB'
+description "ResurectPhone N9 USB access"
+start on started ssh
+stop on stopping ssh
+respawn
+respawn limit 5 60
+exec /bin/sh /usr/lib/resurectphone/maintain-usb-access.sh
+JOB
 
-if [ -s /var/run/sshd.pid ]; then
-    kill -HUP "$(cat /var/run/sshd.pid)" || true
-fi
+"$sshd" -t -f "$backup/sshd_config.new"
+"$sshd" -T -f "$backup/sshd_config.new" -C user=developer,host=usb-client,addr=192.168.2.14 |
+    grep -q '^passwordauthentication yes$'
+"$sshd" -T -f "$backup/sshd_config.new" -C user=developer,host=other-client,addr=192.168.3.14 |
+    grep -q '^passwordauthentication no$'
+sh -n "$backup/watcher.new"
 
-echo "Accès developer sans mot de passe autorisé depuis le réseau USB (192.168.2.0/24)."
-echo "Le compte developer n'accepte pas de mot de passe hors du sous-réseau USB. Sauvegarde : $backup"
-echo "Branchez le N9 à un PC et ouvrez ResurectPhone pour créer automatiquement sa clé."
+# Aegis protects /etc/init: package our own files with reference hashes.
+# Build ar + BusyBox tar directly; Harmattan dpkg-deb --build requires GNU tar.
+mkdir -p "$backup/data/usr/lib/resurectphone" "$backup/data/etc/init" "$backup/control"
+cp "$backup/watcher.new" "$backup/data/usr/lib/resurectphone/maintain-usb-access.sh"
+cp "$backup/job.new" "$backup/data/etc/init/resurectphone-usb-access.conf"
+chmod 755 "$backup/data/usr/lib/resurectphone/maintain-usb-access.sh"
+chmod 644 "$backup/data/etc/init/resurectphone-usb-access.conf"
+chmod 755 "$backup/data" "$backup/data/usr" "$backup/data/usr/lib" \
+    "$backup/data/usr/lib/resurectphone" "$backup/data/etc" "$backup/data/etc/init"
+cat > "$backup/control/control" <<'CONTROL'
+Package: resurectphone-n9
+Version: 0.1.1
+Architecture: all
+Maintainer: ResurectPhone
+Priority: optional
+Section: misc
+Description: Automatic USB access for ResurectPhone
+CONTROL
+(
+    cd "$backup/data"
+    for file in usr/lib/resurectphone/maintain-usb-access.sh etc/init/resurectphone-usb-access.conf; do
+        hash=$(sha1sum "$file" | cut -d ' ' -f 1)
+        # SDK refhashmake format; dpkg assigns the actual installation origin.
+        printf 'S 15 com.nokia.maemo H 40 %s R %s %s\n' "$hash" "${#file}" "$file"
+    done
+) > "$backup/control/digsigsums"
+(cd "$backup/control" && busybox tar -czf "$backup/control.tar.gz" .)
+(cd "$backup/data" && busybox tar -czf "$backup/data.tar.gz" .)
+printf '2.0\n' > "$backup/debian-binary"
+(
+    cd "$backup"
+    printf '!<arch>\n'
+    for file in debian-binary control.tar.gz data.tar.gz; do
+        size=$(wc -c < "$file" | tr -d ' ')
+        printf '%-16s%-12s%-6s%-6s%-8s%-10s`\n' "$file" 0 0 0 100644 "$size"
+        cat "$file"
+        if [ $((size % 2)) = 1 ]; then printf '\n'; fi
+    done
+) > "$backup/resurectphone-n9.deb"
+
+changed=0
+finished=0
+finish() {
+    result=$?
+    if [ "$changed" = 1 ] && [ "$finished" = 0 ]; then
+        set +e
+        sh "$backup/restore.sh" >&2
+        echo "Préparation interrompue : configuration restaurée." >&2
+    fi
+    exit "$result"
+}
+trap finish 0
+trap 'exit 1' HUP INT TERM
+changed=1
+initctl stop resurectphone-usb-access >/dev/null 2>&1 || true
+dpkg -i "$backup/resurectphone-n9.deb"
+cat "$backup/sshd_config.new" > "$config"
+touch "$work/usb-enabled"
+initctl reload-configuration
+initctl start resurectphone-usb-access
+passwd -d developer >/dev/null
+"$sshd" -t
+test -s /var/run/sshd.pid
+kill -HUP "$(cat /var/run/sshd.pid)"
+initctl status resurectphone-usb-access | grep -q 'start/running'
+printf '%s\n' "$backup" > "$work/latest-usb-backup"
+finished=1
+printf 'RESURECTPHONE_BACKUP=%s\n' "$backup"
+echo 'RESURECTPHONE_USB_READY'

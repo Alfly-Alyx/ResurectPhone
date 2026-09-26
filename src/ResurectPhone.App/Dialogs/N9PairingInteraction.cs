@@ -70,7 +70,20 @@ public sealed class N9PairingInteraction(Func<Window?> ownerProvider) : IN9Pairi
             MessageBoxImage.Information);
     }
 
-    private static byte[] ReadUsbSetupScript()
+    public char[]? RequestAdministratorPassword()
+    {
+        var dialog = new N9PairingDialog(administrator: true) { Owner = ownerProvider() };
+        try
+        {
+            return dialog.ShowDialog() == true ? dialog.ReadPasswordCharacters() : null;
+        }
+        finally
+        {
+            dialog.ClearPassword();
+        }
+    }
+
+    public byte[] ReadUsbSetupScript()
     {
         using var source = typeof(N9PairingInteraction).Assembly.GetManifestResourceStream(
             "ResurectPhone.N9UsbSetup") ?? throw new InvalidOperationException(

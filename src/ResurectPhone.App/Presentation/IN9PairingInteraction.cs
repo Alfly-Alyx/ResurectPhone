@@ -7,6 +7,10 @@ public interface IN9PairingInteraction
 {
     string? RequestTemporaryPassword();
 
+    char[]? RequestAdministratorPassword();
+
+    byte[] ReadUsbSetupScript();
+
     bool ConfirmHostKey(N9HostKeyIdentity identity);
 
     bool ConfirmForgetPairing();

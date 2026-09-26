@@ -11,21 +11,21 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock Text="Autoriser la liaison développeur" FontSize="22" FontWeight="SemiBold" />
-        <TextBlock Grid.Row="1" Margin="0,12,0,18" TextWrapping="Wrap"
+        <TextBlock x:Name="Heading" Text="Première connexion au Nokia N9" FontSize="22" FontWeight="SemiBold" />
+        <TextBlock x:Name="Instructions" Grid.Row="1" Margin="0,12,0,18" TextWrapping="Wrap"
                    Foreground="{StaticResource MutedTextBrush}"
-                   Text="Sur le N9, ouvrez SDK Connectivity, choisissez USB et laissez cette application ouverte. ResurectPhone utilisera uniquement le compte developer." />
+                   Text="Saisissez le mot de passe actuellement affiché par SDK Connectivity. ResurectPhone enregistrera ce PC pour les prochaines connexions USB." />
         <StackPanel Grid.Row="2">
-            <TextBlock Text="Mot de passe affiché par SDK Connectivity" FontWeight="SemiBold" />
+            <TextBlock x:Name="PasswordLabel" Text="Mot de passe affiché par SDK Connectivity" FontWeight="SemiBold" />
             <PasswordBox x:Name="PasswordInput" Margin="0,7,0,5" />
-            <TextBlock Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap"
+            <TextBlock x:Name="PasswordHint" Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap"
                        Text="Il ne s’agit ni du code de verrouillage du téléphone ni d’un mot de passe root. Ce mot de passe temporaire ne sera pas enregistré." />
         </StackPanel>
         <Border Grid.Row="3" Background="{StaticResource SubtleFillHoverBrush}"
                 BorderBrush="{StaticResource AccentBrush}" BorderThickness="1"
                 Padding="12" Margin="0,18,0,0" VerticalAlignment="Top">
-            <TextBlock TextWrapping="Wrap"
-                       Text="ResurectPhone vous montrera ensuite l’empreinte du N9. Après confirmation, il ajoutera une clé au seul compte developer et protégera sa partie privée avec votre compte Windows." />
+            <TextBlock x:Name="FooterText" TextWrapping="Wrap"
+                       Text="Une clé propre à ce PC permettra de se reconnecter même lorsque le mot de passe SDK change. Le mot de passe temporaire ne sera pas enregistré par ResurectPhone." />
         </Border>
         <Grid Grid.Row="4" Margin="0,18,0,0">
             <TextBlock x:Name="ValidationText" Foreground="#C42B1C"

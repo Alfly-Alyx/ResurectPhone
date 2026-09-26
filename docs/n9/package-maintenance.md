@@ -31,13 +31,13 @@ réellement visible dans l’inventaire du téléphone. Elle reste interdite pou
 La priorité `standard` ne suffit pas, à elle seule, à classer un paquet comme
 protégé. L’appartenance au méta-paquet Harmattan non plus.
 
-Les commandes administrateur passent par `devel-su`. ResurectPhone demande
-d’abord à l’utilisateur l’identifiant administrateur d’origine du N9. S’il est
-refusé, une seconde saisie permet d’utiliser celui configuré sur le téléphone.
-Aucune valeur par défaut n’est inscrite dans le code ou dans les journaux. Le
-secret est envoyé uniquement sur l’entrée standard de la commande, jamais dans
-sa ligne de commande, puis les caractères et les octets détenus par le logiciel
-sont effacés en mémoire.
+Les commandes administrateur passent par `devel-su`. À la demande du
+propriétaire, ResurectPhone essaie systématiquement le mot de passe d’usine
+`rootme` avant de demander celui personnalisé. Cette règle s’applique même
+lorsqu’un mot de passe personnalisé vient d’être fourni. Le secret est envoyé
+uniquement sur l’entrée standard, jamais dans la ligne de commande ni les
+journaux, puis ses buffers sont effacés en mémoire. La préparation USB utilise
+ce parcours ; les futures opérations de maintenance devront le réutiliser.
 
 ## Sauvegarde en `.deb`
 

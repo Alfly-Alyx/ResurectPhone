@@ -5,7 +5,7 @@ ResurectPhone est un laboratoire autonome de remise en service de téléphones. 
 ## Premier socle
 
 - détection générique d’un téléphone connecté, sans inventer son identité ;
-- détection et appairage automatiques du Nokia N9 par le mode USB de SDK Connectivity après une préparation unique du téléphone ;
+- détection et appairage automatiques du Nokia N9 par le mode USB de SDK Connectivity ; préparation par SSH avec essai automatique du mot de passe administrateur d’origine, puis accès sans saisie pour les prochains PC ;
 - lecture réelle et sans modification du modèle, d’Harmattan/PR1.3, du code produit et du noyau ;
 - empreinte SSH épinglée et clé privée d’appairage protégée par le compte Windows ;
 - règles de sauvegarde, validation, installation et suppression des paquets N9 issues d’essais matériels ;
@@ -15,7 +15,7 @@ ResurectPhone est un laboratoire autonome de remise en service de téléphones. 
 - libération prudente de la mémoire vive, après confirmation, limitée aux applications d’arrière-plan autorisées par Android et suivie d’une mesure avant/après ;
 - catalogue indépendant des fonctions de restauration ;
 - séparation entre interface, règles métier et accès Windows ;
-- aucune opération de flashage ou de réparation automatique dans ce premier socle ;
+- préparation USB du N9 avec sauvegarde et restauration ; aucune opération de flashage dans ce premier socle ;
 - aucune dépendance directe vers les projets AndroLink.
 
 ## Périmètre prévu

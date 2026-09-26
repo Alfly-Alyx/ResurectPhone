@@ -34,6 +34,11 @@ public class N9ConnectionException(string message, Exception? innerException = n
 public sealed class N9AuthenticationRequiredException(string message, Exception? innerException = null)
     : N9ConnectionException(message, innerException);
 
+public sealed class N9AdministratorRequiredException()
+    : N9ConnectionException("Le mot de passe administrateur d’origine a été refusé. Saisissez celui configuré sur le N9.");
+
+public sealed record N9UsbAccessResult(bool AlreadyConfigured, string BackupPath);
+
 public interface IN9ConnectionService
 {
     bool HasPairing { get; }
@@ -49,6 +54,11 @@ public interface IN9ConnectionService
     Task<N9ConnectionStatus> GetStatusAsync(CancellationToken cancellationToken = default);
 
     Task<N9DeviceDetails> ReadDeviceDetailsAsync(CancellationToken cancellationToken = default);
+
+    Task<N9UsbAccessResult> PrepareUsbAccessAsync(
+        byte[] setupScript,
+        char[]? administratorPassword = null,
+        CancellationToken cancellationToken = default);
 
     void ForgetPairing();
 }
