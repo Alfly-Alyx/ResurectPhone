@@ -11,14 +11,24 @@ public sealed record N9Application(N9DebPackageMetadata Metadata, string Name, s
     public string? RemovalBlock => N9PackageMaintenancePolicy.GetRemovalBlockReason(Metadata);
 }
 
+public sealed record N9SettingsBackup(string FeatureId, string Path, string Label, DateTimeOffset CreatedAt)
+{
+    public string DisplayName => CreatedAt == DateTimeOffset.MinValue ? Label : $"{CreatedAt.ToLocalTime():dd/MM HH:mm} — {Label}";
+}
+
 public sealed record N9MaintenanceReport(string Summary, string Detail, bool CanApply = false,
-    string ActionLabel = "Appliquer", string? BackupPath = null, bool CanForceRemoval = false);
+    string ActionLabel = "Appliquer", string? BackupPath = null, bool CanForceRemoval = false, string? LocalFile = null, bool CanRestoreApplication = false);
 
 public sealed record N9LocalPackage(string Path, N9DebPackageMetadata Metadata, string Sha256,
     bool IsRebuiltBackup);
 
 public interface IN9MaintenanceService
 {
+    Task<IReadOnlyList<N9SettingsBackup>> ReadSettingsBackupsAsync(CancellationToken cancellationToken = default);
+    Task<N9MaintenanceReport> LaunchApplicationAsync(string applicationId, CancellationToken cancellationToken = default);
+    Task<N9MaintenanceReport> ExecuteActionAsync(string actionId,
+        IProgress<N9OperationProgress>? progress = null, char[]? administratorPassword = null,
+        CancellationToken cancellationToken = default);
     Task<IReadOnlyList<N9Application>> ReadApplicationsAsync(CancellationToken cancellationToken = default);
     Task<N9MaintenanceReport> DiagnoseAsync(string featureId, CancellationToken cancellationToken = default);
     Task<N9MaintenanceReport> ApplyAsync(string featureId, char[]? administratorPassword = null,

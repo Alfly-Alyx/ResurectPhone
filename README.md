@@ -8,10 +8,12 @@ ResurectPhone est un laboratoire autonome de remise en service de téléphones. 
 - détection et appairage automatiques du Nokia N9 par le mode USB de SDK Connectivity ; préparation par SSH avec essai automatique du mot de passe administrateur d’origine, puis accès sans saisie pour les prochains PC ;
 - lecture réelle et sans modification du modèle, d’Harmattan/PR1.3, du code produit et du noyau ;
 - empreinte SSH épinglée et clé privée d’appairage protégée par le compte Windows ;
-- maintenance N9 intégrée : inventaire des applications, sauvegarde DEB, installation et suppression avec contrôle des dépendances ;
-- réparation des index Harmattan/SDK via le PC et le câble USB, installation de MeeShop GUI ;
+- maintenance N9 intégrée : inventaire des applications, sauvegarde du paquet original et réinstallation, export DEB reconstruit, installation et suppression avec contrôle des dépendances ;
+- réparation des index Harmattan/SDK via le PC et le câble USB, installation de MeeShop GUI et Warehouse avec préparation automatique des prérequis ;
 - installation contrôlée du correctif TLS 1.2, synchronisation de l’heure et vérification du certificat depuis le N9 ;
-- réglages Cartes/Drive et assistance GPS avec sauvegarde et retour arrière ;
+- réglages Cartes/Drive et assistance GPS avec historique des sauvegardes et retour arrière accessible après fermeture ;
+- boutons pour lancer les boutiques, Cartes, Drive et le navigateur sur le N9 ;
+- préparation de kernel-plus : téléchargement vérifié, ROM de récupération PR1.3 variante 005, sauvegarde du noyau Nokia et transfert dans un dossier dédié ;
 - espace Android distinct, détection ADB explicite et lecture de l’identité du téléphone ;
 - gestionnaire des tâches Android en temps réel : processus, PID, utilisateur, état, CPU, mémoire, lectures/écritures, threads et commande ;
 - filtre et tri des processus, avec maintien à l’écran des lignes dont Android masque certains compteurs ;

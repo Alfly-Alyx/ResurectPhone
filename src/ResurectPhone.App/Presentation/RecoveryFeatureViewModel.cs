@@ -36,8 +36,23 @@ public sealed class RecoveryFeatureViewModel
         {
             IsCompatible = true;
             IsAvailable = execute is not null;
-            StatusText = IsAvailable ? (feature.Id is "n9.firmware" or "n9.nokia-store" ? "Diagnostic disponible" : "Prêt à vérifier") : "Connexion SSH requise";
-            ActionText = "Ouvrir";
+            StatusText = IsAvailable ? "Action sur le N9" : "Connexion SSH requise";
+            ActionText = feature.Id switch
+            {
+                "device.identity" => "Identifier",
+                "n9.firmware" => "Préparer le noyau",
+                "n9.repositories" => "Réparer et actualiser",
+                "n9.dependencies" => "Réparer",
+                "n9.nokia-store" => "Installer une alternative",
+                "n9.alternative-stores" => "Choisir et installer",
+                "n9.package-backup" => "Sauvegarder",
+                "n9.package-install" => "Installer un .deb",
+                "n9.cleanup" => "Choisir et supprimer",
+                "n9.internet" => "Installer ou vérifier TLS",
+                "n9.gps" => "Configurer GPS et Cartes",
+                "n9.account" => "Supprimer les demandes",
+                _ => "Installer ces outils"
+            };
         }
         ActionCommand = new RelayCommand(() => execute?.Invoke(feature), () => IsAvailable && execute is not null);
     }

@@ -7,8 +7,10 @@ Essais du 26 septembre 2026 sur le N9 branché au PC : RM-696, code régional
 ## Interface et moteur
 
 Les vingt et une fiches N9 sont reliées à une fenêtre de maintenance. Elles exécutent
-un diagnostic réel, affichent ses résultats et n’activent la modification que
-si ses prérequis sont réunis. Les opérations passent par la connexion SSH
+les opérations réelles depuis des boutons dédiés. L’installation des boutiques
+et des outils prépare automatiquement les dépôts et les dépendances ; Warehouse
+prépare aussi TLS. La fenêtre conserve les retours arrière dans un historique
+propre au téléphone, accessible après sa fermeture. Les opérations passent par la connexion SSH
 enregistrée, avec vérification de l’empreinte du téléphone. Le mot de passe
 administrateur d’usine est essayé en premier ; un mot de passe personnalisé
 n’est demandé qu’en cas de refus.
@@ -16,15 +18,15 @@ n’est demandé qu’en cas de refus.
 | Fonction | Implémentation et essai | Limite restante |
 | --- | --- | --- |
 | Identité | Lecture réelle du modèle, type matériel, code régional, système, build, noyau et architecture | Aucune identité déduite du seul nom USB |
-| Firmware/noyau | Diagnostic de compatibilité et recherche documentée | Flashage indisponible : aucune image complète compatible et vérifiée embarquée |
+| Firmware/noyau | Préparation réelle réussie : archive kernel-plus, image ARM et 99 modules contrôlés, ROM PR1.3 variante 005 vérifiée contre le code régional, sauvegarde de la partition noyau et des modules, transferts contrôlés sur le N9 | Aucun flashage ; le noyau actif reste celui de Nokia. Parcours limité à la variante 005 reconnue |
 | Dépôts | Cinq index actualisés par USB ; anciennes adresses connues de N9 RepoMirror désactivées avec sauvegarde ; application, restauration et réapplication réussies | Les autres dépôts tiers restent présents et ne sont pas actualisés par ce parcours ; pas de mise à niveau globale |
 | Dépendances Nokia | Réinstallation ciblée de `facebookqml=1.3.2+0m8` et `twitter-qml=1.3.50+0m8` ; paquet système conservé ; APT et audit Debian sans erreur | Réparation automatique limitée au build et aux versions Nokia explicitement reconnus ; aucun service Facebook/Twitter recréé |
-| Nokia Store | Client installé identifié, dépendance au serveur expliquée | Service distant d’origine non rétabli |
-| Boutiques alternatives | Téléchargement vérifié et installation de MeeShop GUI 0.8 réussis | Démarrage et fenêtre contrôlés : message de connexion impossible, le téléphone n’ayant que la route USB. Navigation et installation depuis la boutique à tester avec Internet ; Warehouse/CLI seulement documentés |
-| Sauvegarde DEB | Inventaire, copie hors MyDocs, assemblage sur PC et relecture de l’archive : réussis | Une archive reconstruite ne garantit pas la provenance Aegis ; restauration automatique bloquée |
+| Nokia Store | Action pour installer MeeShop dans la rubrique existante | Service distant Nokia d’origine non rétabli |
+| Boutiques alternatives | MeeShop GUI 0.8 et Warehouse 0.1.9 installés. Lancement depuis le moteur réussi ; capture MeeShop avec catalogue en ligne rempli, capture Warehouse sur son écran de profil | Installation d’une application depuis leurs propres écrans non essayée. MeeShop exige hack-installer, déjà présent sur ce N9 |
+| Sauvegarde DEB | Conservation du paquet original, sauvegarde, suppression puis réinstallation réelle de l’application de test : réussies, version et inventaire vérifiés. Recherche des applications et bouton de réinstallation dans la fenêtre | Sans paquet original, export reconstruit conservé mais réinstallation automatique bloquée. Les données personnelles ne sont pas dans le paquet original |
 | Installation DEB | Format, identité, architecture et SHA-256 contrôlés avant transfert ; installation d’une application d’essai réussie | Les dépendances et la provenance du paquet restent contrôlées par Harmattan |
-| Internet/TLS | Correctif de 16 paquets installé ; date persistante corrigée ; TLS 1.2 et certificat OpenRepos validés par le N9 | Navigateur et applications à relancer et tester ; aucune garantie TLS 1.3 ou compatibilité Web moderne |
-| GPS/Cartes/Drive | Modification SUPL et demandes de compte, vérification, restauration puis réapplication : réussies ; les empreintes après restauration correspondent aux originaux | Acquisition GPS en extérieur et navigation avec cartes locales non essayées |
+| Internet/TLS | Correctif de 16 paquets installé ; date persistante corrigée ; TLS 1.2 et certificat OpenRepos validés par le N9. Une installation neuve enchaîne désormais la vérification. Bouton de lancement du navigateur essayé | Navigation sur les sites depuis le navigateur non validée ; aucune garantie TLS 1.3 ou compatibilité Web moderne |
+| GPS/Cartes/Drive | Modification SUPL et demandes de compte, vérification, restauration puis réapplication : réussies ; les empreintes après restauration correspondent aux originaux | Lancement de Cartes et Drive réussi ; acquisition GPS en extérieur et navigation avec cartes locales non essayées |
 | Compte Nokia | Modification ciblée des réglages Cartes/Drive, comprise dans le cycle précédent | Aucun compte personnel supprimé ; services Nokia distants non recréés |
 | Nettoyage | Sauvegarde puis suppression normale de l’application d’essai : réussies, absence finale confirmée | Mode expert conditionné à un blocage de dépendances et une confirmation ; pas de suppression forcée supplémentaire sur une application personnelle |
 
@@ -66,25 +68,35 @@ Nokia effectivement démarré et inactif.
 
 Le cycle d’application d’essai utilise uniquement
 `resurectphone-maintenance-smoke`, un paquet jetable créé pour cette vérification.
-Il a été supprimé à la fin. Les essais sont effectués par les méthodes publiques
+Le nouveau cycle inclut la réinstallation du paquet original sauvegardé. Il a été supprimé à la fin. Les essais sont effectués par les méthodes publiques
 du même service que l’interface WPF ; ils ne constituent pas une validation
 visuelle de tous les boutons Windows et de tous les écrans du téléphone.
-L’interface Windows a confirmé la connexion automatique sans mot de passe et
-l’affichage des fiches dans son arbre d’accessibilité. La capture et le
-pilotage visuels restent bloqués par l’outil Windows (`window capture timed
-out` / `FrameArrived timed out`). Une capture de la fenêtre MeeShop sur le N9
-a pu être examinée et montre son message d’absence de connexion au serveur.
+L’ancienne interface Windows avait confirmé la connexion automatique et
+l’affichage des fiches dans son arbre d’accessibilité. La validation visuelle
+de la nouvelle fenêtre reste impossible : l’outil Windows échoue au démarrage
+avec `windows sandbox failed: helper_unknown_error: apply deny-read ACLs`.
+La capture MeeShop effectuée maintenant sur le N9 montre le catalogue rempli
+avec le Wi-Fi connecté. La capture Warehouse montre son profil et sa version.
+Les actions de lancement des deux boutiques, de Cartes, Drive et du navigateur
+ont confirmé leurs processus sur le N9.
+
+L’historique des réglages a été vérifié avec une nouvelle instance du service :
+application GPS, lecture de la sauvegarde persistante, restauration, retrait
+de l’entrée restaurée, puis réapplication des réglages demandés.
 
 ## Vérifications du code
 
 - Compilation Release de la solution : aucune erreur, aucun avertissement.
-- 72 tests automatisés réussis, comprenant le routage des vingt et une fiches,
+- 80 tests automatisés réussis, comprenant le routage des vingt et une fiches,
   l’inventaire, la protection des paquets essentiels, les erreurs de dépendances,
   le format des archives, le rejet d’architectures incompatibles, les champs
   de contrôle dupliqués, les limites du relais USB, le manifeste de restauration
   TLS, l’exclusion des secrets de session du rapport TLS et les limites de la
   réparation des dépendances : versions inconnues, installations partielles,
-  suppressions, ajouts inattendus et changements de version refusés.
+  suppressions, ajouts inattendus et changements de version refusés. Les nouveaux
+  tests couvrent la correspondance ROM/code produit, les images ARM tronquées,
+  l’annulation et l’effacement du mot de passe, l’historique par téléphone,
+  les chemins invalides, le cache du paquet original et sa falsification.
 
 ## Documents associés
 

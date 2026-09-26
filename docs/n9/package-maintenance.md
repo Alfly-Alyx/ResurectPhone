@@ -4,8 +4,9 @@
 
 Ces règles proviennent d’essais effectués sur un Nokia N9 réel sous Harmattan.
 Elles sont des contraintes de conception de ResurectPhone, pas de simples pistes.
-Un cycle complet d’installation et de suppression a été validé sur une
-application tierce jetable. Les parcours sont désormais reliés à une fenêtre
+Un cycle complet d’installation, sauvegarde du paquet original, suppression,
+réinstallation, contrôle de version puis suppression finale a été validé sur
+une application tierce jetable. Les parcours sont désormais reliés à une fenêtre
 de maintenance : diagnostic, choix du paquet ou de l’application, exécution,
 rapport et sauvegarde avant suppression.
 
@@ -42,7 +43,21 @@ uniquement sur l’entrée standard, jamais dans la ligne de commande ni les
 journaux, puis ses buffers sont effacés en mémoire. La préparation USB utilise
 ce parcours, également utilisé par les opérations de maintenance.
 
-## Sauvegarde en `.deb`
+## Sauvegarde et réinstallation du paquet original
+
+Chaque installation conserve désormais sur le PC une copie vérifiée du `.deb`
+original, indexée par paquet, version et empreinte SHA-256. Lors d’une sauvegarde,
+ResurectPhone cherche exactement le paquet installé. Pour MeeShop 0.8 et
+Warehouse 0.1.9, il peut aussi récupérer leur paquet officiel à empreinte fixée.
+Le bouton **Réinstaller cette sauvegarde** utilise le paquet original conservé.
+Après fermeture de la fenêtre, **Réinstaller une sauvegarde…** permet de le
+sélectionner dans Documents/ResurectPhone/N9/Backups.
+
+Cette sauvegarde contient le fichier d’installation. Elle ne contient pas les
+données personnelles de l’application. Sans original retrouvé, le repli est
+l’archive reconstruite ci-dessous, identifiée comme non réinstallable automatiquement.
+
+## Sauvegarde reconstruite en `.deb`
 
 La reconstruction directe par `dpkg-deb --build` ne doit pas être utilisée sur
 Harmattan : l’ancien outil réclame à `tar` l’option GNU `--format=gnu`, absente

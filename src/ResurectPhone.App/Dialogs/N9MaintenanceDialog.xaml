@@ -1,37 +1,47 @@
 <Window x:Class="ResurectPhone.App.Dialogs.N9MaintenanceDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Fonction Nokia N9" Width="880" Height="690" MinWidth="640" MinHeight="480"
+        Title="Intervenir sur le Nokia N9" Width="900" Height="700" MinWidth="560" MinHeight="400"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
-    <Grid Margin="24">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-        <TextBlock x:Name="Heading" FontSize="23" FontWeight="SemiBold" TextWrapping="Wrap" />
-        <TextBlock x:Name="DescriptionText" Grid.Row="1" Margin="0,10,0,16" TextWrapping="Wrap"
-                   Foreground="{StaticResource MutedTextBrush}" />
-        <ComboBox x:Name="Applications" Grid.Row="2" Margin="0,0,0,12" DisplayMemberPath="DisplayName"
-                  Visibility="Collapsed" SelectionChanged="Application_SelectionChanged" />
-        <Button x:Name="ChoosePackageButton" Grid.Row="2" Content="Choisir un fichier .deb" HorizontalAlignment="Left"
-                Margin="0,0,0,12" Visibility="Collapsed" Click="ChoosePackage_Click" />
-        <TextBlock x:Name="StatusText" Grid.Row="3" FontWeight="SemiBold" Margin="0,0,0,8" TextWrapping="Wrap" />
-        <TextBox x:Name="ReportText" Grid.Row="4" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True"
-                 VerticalScrollBarVisibility="Auto" Padding="12" FontFamily="Segoe UI" />
-        <ProgressBar x:Name="Progress" Grid.Row="5" Height="4" Margin="0,12,0,0" IsIndeterminate="True" Visibility="Collapsed" />
-        <WrapPanel Grid.Row="6" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button x:Name="RefreshButton" Content="Vérifier à nouveau" Margin="0,0,8,8" Click="Refresh_Click" />
-            <Button x:Name="ExportReportButton" Content="Enregistrer le rapport" Margin="0,0,8,8" Click="ExportReport_Click" />
-            <Button x:Name="RestoreButton" Content="Restaurer les réglages" Margin="0,0,8,8" Visibility="Collapsed" Click="Restore_Click" />
-            <Button x:Name="ForceButton" Content="Suppression en mode expert" Margin="0,0,8,8" Visibility="Collapsed" Click="Force_Click" />
-            <Button x:Name="ApplyButton" Content="Appliquer" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8"
-                    IsEnabled="False" Click="Apply_Click" />
-            <Button x:Name="CloseButton" Content="Fermer" Margin="0,0,0,8" Click="Close_Click" />
+    <DockPanel Margin="24">
+        <WrapPanel DockPanel.Dock="Bottom" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button x:Name="RefreshButton" Content="Actualiser l’état" Margin="0,0,8,8" Click="Refresh_Click"/>
+            <Button x:Name="ExportReportButton" Content="Enregistrer les détails" Margin="0,0,8,8" Click="ExportReport_Click"/>
+            <Button x:Name="CloseButton" Content="Fermer" Margin="0,0,0,8" Click="Close_Click"/>
         </WrapPanel>
-    </Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,0,12,0">
+                <TextBlock x:Name="Heading" FontSize="23" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                <TextBlock x:Name="DescriptionText" Margin="0,10,0,16" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}"/>
+                <ComboBox x:Name="Stores" Visibility="Collapsed" Margin="0,0,0,12" SelectedIndex="0" SelectionChanged="Store_SelectionChanged">
+                    <ComboBoxItem Content="MeeShop GUI 0.8 — boutique OpenRepos"/>
+                    <ComboBoxItem Content="Warehouse 0.1.9 — ancien client OpenRepos (TLS inclus)"/>
+                </ComboBox>
+                <TextBlock x:Name="SearchLabel" Text="Rechercher une application" Margin="0,0,0,4" Visibility="Collapsed"/>
+                <TextBox x:Name="ApplicationSearch" Visibility="Collapsed" Margin="0,0,0,8" TextChanged="ApplicationSearch_Changed"/>
+                <ComboBox x:Name="Applications" Margin="0,0,0,12" DisplayMemberPath="DisplayName" Visibility="Collapsed" SelectionChanged="Application_SelectionChanged"/>
+                <Button x:Name="ChoosePackageButton" Content="Choisir le paquet à installer…" HorizontalAlignment="Left"
+                        Margin="0,0,0,12" Visibility="Collapsed" Click="ChoosePackage_Click"/>
+                <WrapPanel Margin="0,0,0,12">
+                    <Button x:Name="ApplyButton" Content="Exécuter sur le N9" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" IsEnabled="False" Click="Apply_Click"/>
+                    <Button x:Name="RestoreApplicationButton" Content="Réinstaller une sauvegarde…" Margin="0,0,8,8" Visibility="Collapsed" Click="RestoreApplication_Click"/>
+                    <Button x:Name="LaunchButton" Content="Ouvrir sur le N9" Margin="0,0,8,8" Visibility="Collapsed" Click="Launch_Click"/>
+                    <Button x:Name="DriveButton" Content="Ouvrir Drive" Margin="0,0,8,8" Visibility="Collapsed" Click="Drive_Click"/>
+                    <Button x:Name="FilesButton" Content="Ouvrir le dossier" Margin="0,0,8,8" Visibility="Collapsed" Click="Files_Click"/>
+                    <Button x:Name="ForceButton" Content="Suppression en mode expert" Margin="0,0,8,8" Visibility="Collapsed" Click="Force_Click"/>
+                </WrapPanel>
+                <TextBlock x:Name="StatusText" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                <ProgressBar x:Name="Progress" Height="5" Margin="0,12,0,12" IsIndeterminate="True" Visibility="Collapsed"/>
+                <StackPanel x:Name="SettingsBackupsPanel" Visibility="Collapsed" Margin="0,18,0,0">
+                    <TextBlock Text="Revenir à des réglages sauvegardés" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                    <ComboBox x:Name="SettingsBackups" DisplayMemberPath="DisplayName" Margin="0,0,0,8" SelectionChanged="SettingsBackup_Changed"/>
+                    <Button x:Name="RestoreButton" Content="Restaurer les réglages sélectionnés" HorizontalAlignment="Left" Click="Restore_Click"/>
+                </StackPanel>
+                <Expander x:Name="Details" Header="Détails de l’opération" Margin="0,18,0,0">
+                    <TextBox x:Name="ReportText" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True" MinHeight="150" MaxHeight="300"
+                             VerticalScrollBarVisibility="Auto" Padding="12" FontFamily="Segoe UI"/>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
 </Window>

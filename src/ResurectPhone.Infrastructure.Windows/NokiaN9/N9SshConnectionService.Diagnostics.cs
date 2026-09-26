@@ -20,11 +20,10 @@ public sealed partial class N9SshConnectionService
             var details = await ReadDeviceDetailsAsync(cancellationToken);
             var text = $"Modèle : {details.ProductName}\nType matériel : {details.ProductCode}\nCode produit régional : {details.SalesCode}\nSystème : {details.SystemName} {details.SystemVersion}\nBuild : {details.SystemBuild}\nNoyau : {details.KernelVersion}\nArchitecture : {details.Architecture}";
             if (featureId == "n9.firmware")
-                text += "\n\nHarmattan PR1.3 est la famille compatible avec le N9 RM-696. Les variantes régionales exigent le code produit exact de l’appareil.\n" +
-                    "Kernel-plus 2.6.32.61 est un noyau communautaire conçu pour Harmattan, avec une configuration pour le N9 RM-696. Son installation sur ce téléphone reste à valider.\n" +
-                    "Le dépôt Nemo propose notamment les branches 2.6.32.54 et 3.5.3. La compatibilité de la branche 3.5.3 avec Harmattan PR1.3 n’a pas été validée dans ResurectPhone.\n" +
-                    "Aucune image ROM avec compatibilité et empreinte vérifiées n’est embarquée. Le flashage reste indisponible.\n" +
-                    "Sources : https://github.com/harmattan/kernel-plus-harmattan — https://github.com/hurrian/kernel-plus-harmattan/tree/kernel-plus-r7 — https://github.com/nemomobile/kernel-adaptation-n950-n9";
+                text += "\n\nKernel-plus 2.6.32.61 (28 novembre 2013) : image ARM et 99 modules disponibles.\n" +
+                    "La préparation télécharge la ROM de récupération correspondant à PR1.3 variante 005 et au code produit Nokia, sauvegarde le noyau et ses modules, puis copie kernel-plus dans MyDocs/ResurectPhone/Kernels.\n" +
+                    "L’installation et le redémarrage avec ce noyau restent à valider.\n" +
+                    "Source de l’archive : https://archive.org/details/n9-drivers-fw\nSources du noyau : https://github.com/harmattan/kernel-plus-harmattan";
             return new(featureId == "device.identity" ? "Identité lue sur le N9" : "Compatibilité firmware examinée", text);
         }
         if (featureId is "n9.package-backup" or "n9.cleanup")
@@ -57,7 +56,7 @@ public sealed partial class N9SshConnectionService
                     "Boutique OpenRepos : navigation, installation, suppression et mise à jour des applications. Son auteur annonce un fonctionnement sans correctif TLS système. La recherche OpenRepos reste incomplète.\n" +
                     "Le paquet officiel est téléchargé par le PC et son empreinte vérifiée avant installation. MeeShop GUI remplace l’ancien MeeShop CLI (même identifiant de paquet).\n" +
                     (dependency.Status == 0 ? "La dépendance hack-installer est présente.\n" : "La dépendance hack-installer manque ; installez son paquet officiel avant MeeShop GUI.\n") +
-                    "Autres pistes : MeeShop CLI 0.2.0 (2023, archivé) ; Warehouse 0.1.9 (2014, nécessite la correction TLS et des essais).\n" +
+                    "Warehouse 0.1.9 est également proposé dans la liste. Son installation prépare le correctif TLS 1.2 automatiquement. MeeShop CLI 0.2.0 (2023) est archivé et remplace la GUI.\n" +
                     "Source : https://openrepos.net/content/iarchep/meeshop-gui", dependency.Status == 0, "Installer MeeShop GUI");
             }, cancellationToken);
         return await WithMaintenanceClientAsync(async (client, _) =>
@@ -98,7 +97,7 @@ public sealed partial class N9SshConnectionService
         }, cancellationToken);
     }
 
-    public async Task<N9MaintenanceReport> ApplyAsync(string featureId, char[]? administratorPassword = null,
+    private async Task<N9MaintenanceReport> ApplyCoreAsync(string featureId, char[]? administratorPassword = null,
         CancellationToken cancellationToken = default)
     {
         try
@@ -106,9 +105,18 @@ public sealed partial class N9SshConnectionService
             if (featureId == "n9.internet")
             {
                 var existing = await InspectTlsAsync(cancellationToken);
-                return existing.BackupPath is not null
-                    ? await VerifyTlsAsync(existing.BackupPath, administratorPassword, cancellationToken)
-                    : await InstallTlsAsync(administratorPassword, cancellationToken);
+                if (existing.BackupPath is not null)
+                    return await VerifyTlsAsync(existing.BackupPath, administratorPassword, cancellationToken);
+                var installed = await InstallTlsAsync(administratorPassword?.ToArray(), cancellationToken);
+                try
+                {
+                    var verified = await VerifyTlsAsync(installed.BackupPath!, administratorPassword, cancellationToken);
+                    return verified with { Detail = installed.Detail + "\n\n" + verified.Detail };
+                }
+                catch (Exception error) when (error is not (N9MaintenanceFailureException or N9AdministratorRequiredException))
+                {
+                    throw new N9MaintenanceFailureException("Correctif installé, mais vérification interrompue : " + error.Message, installed.BackupPath!);
+                }
             }
             if (featureId == "n9.alternative-stores")
             {
@@ -164,11 +172,14 @@ public sealed partial class N9SshConnectionService
         {
             if (!Regex.IsMatch(backupPath, @"^/var/lib/resurectphone/maintenance/[a-f0-9]{32}$", RegexOptions.CultureInvariant))
                 throw new ArgumentException("Dossier de sauvegarde ResurectPhone invalide.");
-            return await WithMaintenanceClientAsync((client, _) => WithAdministratorAsync(client, administratorPassword, async password =>
+            return await WithMaintenanceClientAsync((client, pairing) => WithAdministratorAsync(client, administratorPassword, async password =>
             {
                 var restore = "if test -f " + backupPath + "/packages-before; then\n" + ReleaseIdlePackageManager + "\nfi\nsh " + backupPath + "/restore.sh";
                 var result = await RunMaintenanceScriptAsync(client, restore, password, cancellationToken, TimeSpan.FromMinutes(10));
                 RequireSuccess(result, "La restauration a échoué.");
+                try { await new N9SettingsHistory(pairing.HostKeySha256).RemoveAsync(backupPath, CancellationToken.None); }
+                catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+                { return new N9MaintenanceReport("Réglages restaurés", LimitOutput(result.Output) + "\nL’historique local n’a pas pu être actualisé : " + error.Message); }
                 return new N9MaintenanceReport("Réglages restaurés", LimitOutput(result.Output));
             }, cancellationToken), cancellationToken);
         }

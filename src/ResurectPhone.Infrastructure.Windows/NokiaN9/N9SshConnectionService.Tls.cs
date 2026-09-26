@@ -39,7 +39,8 @@ public sealed partial class N9SshConnectionService
                 var result = await RunMaintenanceScriptAsync(client, script, null, cancellationToken);
                 var passed = result.Status == 0 && result.Output.Contains("TLSv1.2", StringComparison.Ordinal) &&
                     result.Output.Contains("Verify return code: 0 (ok)", StringComparison.Ordinal);
-                return new N9MaintenanceReport(passed ? "TLS 1.2 et certificat OpenRepos vérifiés sur le N9" : "TLS installé, connexion non validée",
+                if (!passed) throw new N9MaintenanceFailureException("TLS 1.2 n’a pas passé la vérification du certificat OpenRepos.\n" + TlsPublicSummary(result.Output), backup);
+                return new N9MaintenanceReport("TLS 1.2 et certificat OpenRepos vérifiés sur le N9",
                     TlsPublicSummary(result.Output) + "\nLe navigateur et les applications doivent être relancés pour charger les bibliothèques. Une connexion Wi-Fi/mobile reste nécessaire hors ResurectPhone.",
                     true, "Vérifier TLS 1.2", backup);
             }

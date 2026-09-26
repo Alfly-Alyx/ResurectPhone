@@ -37,8 +37,9 @@ téléphone. Aucun noyau n’a été installé.
   1er avril 2014 et il n’a pas de release GitHub. Une archive communautaire
   `linux_2.6.32.61-plus-20131128.tar.gz` est décrite dans les anciennes
   [instructions Ubiboot](https://talk.maemo.org/archive/index.php/t-89345-p-5.html).
-  Cette archive antérieure au fork `r7` n’a été ni récupérée, ni vérifiée, ni
-  testée sur le N9 connecté.
+  Cette archive antérieure au fork `r7` a maintenant été récupérée depuis
+  l’archive communautaire, contrôlée et transférée sur le N9. Elle n’a pas
+  été installée ni démarrée.
 - L’ancien noyau N9 de postmarketOS est `4.17-rc4`, dans
   [`device/archived/linux-nokia-n9`](https://github.com/external-mirrors/pmaports/blob/main/device/archived/linux-nokia-n9/APKBUILD).
   Le paquet appareil N9 est lui aussi dans
@@ -104,6 +105,37 @@ installation, relever `uname -r` sur le N9, vérifier son modèle et son mode
 de démarrage, puis préparer une image et ses modules avec une procédure de
 restauration. ResurectPhone ne doit pas proposer un flashage à partir du seul
 numéro de version.
+
+## Préparation intégrée et essayée
+
+Le bouton **Télécharger, sauvegarder et transférer** exécute le parcours
+suivant, testé sur le N9 connecté :
+
+1. lire le modèle, le build, le code régional et vérifier l’accès administrateur ;
+2. vérifier le code régional dans la table PR1.3 archivée et n’accepter que la
+   variante 005 actuellement documentée dans le programme ;
+3. télécharger et contrôler l’archive kernel-plus du 28 novembre 2013,
+   l’image ARM, les 99 modules et leur version, ainsi que le programme Nokia ;
+4. télécharger la ROM `DFL61_HARMATTAN_40.2012.21-3_PR_LEGACY_005-OEM1-958_ARM.bin`
+   et vérifier sa taille (1 248 012 278 octets) et son SHA-1 archivé ;
+5. lire et sauvegarder les 16 Mio de la partition noyau et archiver les modules
+   Nokia actuels ; télécharger les copies sur PC et comparer les empreintes ;
+6. copier l’archive et l’image kernel-plus dans le dossier dédié du N9 et
+   comparer les fichiers transférés avec ceux vérifiés sur PC.
+
+Sur le PC : `Documents/ResurectPhone/N9/Kernels/kernel-plus-20131128`.
+Sur le N9 : `MyDocs/ResurectPhone/Kernels/kernel-plus-20131128`.
+Les sauvegardes datées par opération sont dans `Sauvegardes/<identifiant>` sur PC
+et `/var/lib/resurectphone/kernel-backups/<identifiant>` sur le N9.
+La préparation peut être annulée ; les téléchargements achevés et vérifiés
+sont réutilisés au prochain essai.
+
+L’archive provient de [n9-drivers-fw](https://archive.org/details/n9-drivers-fw).
+SHA-256 : `6B069F05C42F0375C546201D6835B8A35399B9644A5F764E90569032967104BA`.
+Les empreintes figent ces fichiers archivés ; elles ne constituent pas une
+signature de l’auteur ni une validation de démarrage sur le matériel.
+Le programme de flashage n’est pas exécuté, les modules ne sont pas installés
+et le noyau actif reste `2.6.32.54-dfl61-20121301`.
 
 ## Accès USB automatique depuis tout PC
 

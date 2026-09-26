@@ -8,7 +8,7 @@ using ResurectPhone.Core.NokiaN9;
 
 namespace ResurectPhone.Infrastructure.Windows.NokiaN9;
 
-public sealed partial class N9SshConnectionService : IN9ConnectionService, IN9MaintenanceService
+public sealed partial class N9SshConnectionService : IN9ConnectionService, IN9MaintenanceService, IN9KernelService
 {
     public const string DefaultUsbHost = "192.168.2.15";
     public const int DefaultPort = 22;

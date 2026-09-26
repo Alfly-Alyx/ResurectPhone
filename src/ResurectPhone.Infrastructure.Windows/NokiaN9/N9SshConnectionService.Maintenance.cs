@@ -8,6 +8,7 @@ namespace ResurectPhone.Infrastructure.Windows.NokiaN9;
 
 public sealed partial class N9SshConnectionService
 {
+    private readonly N9OriginalPackageStore _originalPackages = new();
     private readonly SemaphoreSlim _maintenanceLock = new(1, 1);
 
     private async Task<T> WithMaintenanceClientAsync<T>(Func<SshClient, N9Pairing, Task<T>> action,
@@ -144,6 +145,7 @@ public sealed partial class N9SshConnectionService
                 throw new InvalidDataException("Cette sauvegarde reconstruite ne préserve pas la provenance Aegis. Sa restauration automatique est bloquée.");
             if (N9PackageMaintenancePolicy.IsProtectedPackage(verified.Metadata))
                 throw new InvalidDataException("Ce paquet est protégé et ne peut pas être remplacé par cet outil.");
+            verified = await _originalPackages.SaveAsync(verified, cancellationToken);
             return await WithMaintenanceClientAsync((client, pairing) => WithAdministratorAsync(client, administratorPassword,
                 async password =>
                 {
@@ -190,6 +192,25 @@ public sealed partial class N9SshConnectionService
             return await WithMaintenanceClientAsync(async (client, pairing) =>
             {
                 var app = await RequireApplicationAsync(client, packageId, cancellationToken);
+                var original = await _originalPackages.FindAsync(packageId, app.Metadata.Version, app.Metadata.Architecture, cancellationToken);
+                if (original is null && (packageId == "meeshop" && app.Metadata.Version == "0.8" || packageId == "warehouse" && app.Metadata.Version == "0.1.9"))
+                {
+                    var download = packageId == "meeshop" ? await N9OnlineResources.DownloadMeeShopAsync(cancellationToken) : await N9OnlineResources.DownloadWarehouseAsync(cancellationToken);
+                    original = await _originalPackages.SaveAsync(await InspectLocalPackageAsync(download, cancellationToken), cancellationToken);
+                }
+                if (original is not null)
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(destination))!);
+                    await using (var source = File.OpenRead(original.Path))
+                    await using (var target = new FileStream(destination, FileMode.CreateNew, FileAccess.Write))
+                        await source.CopyToAsync(target, cancellationToken);
+                    var check = await InspectLocalPackageAsync(destination, cancellationToken);
+                    if (check.Sha256 != original.Sha256) throw new InvalidDataException("La sauvegarde du paquet original est corrompue.");
+                    return new N9MaintenanceReport("Paquet original sauvegardé — réinstallation disponible",
+                        Path.GetFullPath(destination) + "\nSHA-256 : " + check.Sha256 +
+                        "\nLe fichier d’installation original est conservé. Les données personnelles de l’application ne font pas partie de ce paquet.",
+                        LocalFile: Path.GetFullPath(destination), CanRestoreApplication: true);
+                }
                 return await WithAdministratorAsync(client, administratorPassword, async password =>
                 {
                     var work = "/var/tmp/resurectphone-" + Guid.NewGuid().ToString("N");
@@ -215,7 +236,7 @@ public sealed partial class N9SshConnectionService
                         if (archive.Metadata.Package != app.Metadata.Package || !archive.IsRebuiltBackup)
                             throw new InvalidDataException("La sauvegarde assemblée n’a pas passé la vérification.");
                         return new N9MaintenanceReport("Sauvegarde créée", Path.GetFullPath(destination) + "\nSHA-256 : " + archive.Sha256 +
-                            "\nArchive Debian vérifiée. La restauration Aegis n’est pas garantie et reste bloquée.");
+                            "\nArchive Debian vérifiée. La restauration Aegis n’est pas garantie et reste bloquée.", LocalFile: Path.GetFullPath(destination));
                     }
                     finally
                     {

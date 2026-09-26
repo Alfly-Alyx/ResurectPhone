@@ -127,6 +127,42 @@ public sealed class N9MaintenanceTests
             N9TlsManifest.Packages.Where(package => package.OriginalSha256 is null).Select(package => package.Package).Order());
     }
 
+    [Fact]
+    public async Task OriginalPackageCachePreservesExactVersionAndRejectsTampering()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "n9-original-tests", Guid.NewGuid().ToString("N"));
+        var source = await MakePackageAsync("Package: calc\nVersion: 1.2\nArchitecture: armel\n");
+        try
+        {
+            var store = new N9OriginalPackageStore(root);
+            var package = await N9LocalPackageReader.ReadAsync(source, default);
+            var saved = await store.SaveAsync(package, default);
+            File.Delete(source);
+            var found = await store.FindAsync("calc", "1.2", "armel", default);
+            Assert.NotNull(found);
+            Assert.Equal(package.Sha256, found.Sha256);
+            Assert.Null(await store.FindAsync("calc", "1.3", "armel", default));
+            Assert.Null(await store.FindAsync("calc", "1.2", "all", default));
+            var bytes = await File.ReadAllBytesAsync(saved.Path);
+            bytes[^4] ^= 1;
+            await File.WriteAllBytesAsync(saved.Path, bytes);
+            Assert.Null(await store.FindAsync("calc", "1.2", "armel", default));
+        }
+        finally { File.Delete(source); if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public async Task RebuiltPackageCannotBeStoredAsOriginal()
+    {
+        var source = await MakePackageAsync("Package: calc\nVersion: 1.2\nArchitecture: armel\nX-ResurectPhone-Backup: DebianArchiveOnly\n");
+        try
+        {
+            var package = await N9LocalPackageReader.ReadAsync(source, default);
+            await Assert.ThrowsAsync<InvalidDataException>(() => new N9OriginalPackageStore().SaveAsync(package, default));
+        }
+        finally { File.Delete(source); }
+    }
+
     private static async Task<string> MakePackageAsync(string control)
     {
         var path = Path.Combine(Path.GetTempPath(), "n9-reader-" + Guid.NewGuid().ToString("N") + ".deb");

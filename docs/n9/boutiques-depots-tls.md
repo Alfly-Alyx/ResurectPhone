@@ -6,9 +6,9 @@ Vérifications et essais du 26 septembre 2026, sur Harmattan PR1.3 RM-696.
 
 | Solution | État trouvé | Proposition dans ResurectPhone |
 | --- | --- | --- |
-| [MeeShop GUI](https://openrepos.net/content/iarchep/meeshop-gui) | 0.8, juillet 2026 ; interface OpenRepos, installation, suppression et mises à jour ; recherche encore incomplète | Installation intégrée. Paquet officiel vérifié et installé sur le N9. Démarrage et fenêtre contrôlés sur le N9 ; navigation et installation restent à essayer avec Internet sur le téléphone. |
+| [MeeShop GUI](https://openrepos.net/content/iarchep/meeshop-gui) | 0.8, juillet 2026 ; interface OpenRepos, installation, suppression et mises à jour ; recherche encore incomplète | Installation intégrée. Paquet officiel vérifié et installé sur le N9. Lancement intégré essayé et catalogue en ligne visible sur le N9 en Wi-Fi. Installation depuis la boutique encore à essayer. |
 | [MeeShop CLI](https://github.com/WunderWungiel/MeeShop) | 0.2.0, 2023 ; dépôt archivé en avril 2025 | Mentionné comme alternative historique. Même identifiant `meeshop` que la GUI : les deux versions se remplacent. |
-| [Warehouse](https://openrepos.net/content/basil/warehouse) | 0.1.9, juillet 2014 | Piste ancienne à retester après correction TLS ; pas d’installation automatique proposée sans validation actuelle. |
+| [Warehouse](https://openrepos.net/content/basil/warehouse) | 0.1.9, juillet 2014 | Installation intégrée avec préparation des dépôts, dépendances et TLS. Paquet officiel 0.1.9 installé et lancement essayé sur le N9 ; profil visible. Navigation du catalogue et installation depuis Warehouse encore à essayer. |
 
 MeeShop GUI est annoncé par son auteur comme utilisable sans le correctif TLS
 système. Son paquet utilise `hack-installer`, déjà présent sur le téléphone
@@ -20,8 +20,7 @@ Paquet retenu :
 SHA-256 : `0D44B74CDEE588FA73DDAAAFB2D922D167D8C21947F6630DFCB0E3806D34EA35`.
 
 La boutique Nokia d’origine dépend de services distants qui ne sont pas
-rétablis par la présence du client. Sa fiche permet un diagnostic et décrit
-ce blocage ; elle ne simule pas une réparation réussie.
+rétablis par la présence du client. Sa fiche permet désormais de lancer l’installation de MeeShop comme alternative.
 
 ## Dépôts système et SDK
 
@@ -84,8 +83,8 @@ par USB ; la négociation et la validation étaient effectuées par le N9.
 3. Synchroniser l’heure avec le PC si nécessaire, via le service `timed`.
 4. Transférer les paquets, conserver une sauvegarde dédiée sur le N9,
    puis installer dans l’ordre prévu par l’auteur via `aegis-dpkg`.
-5. Vérifier les 16 états installés et `dpkg --audit` ; proposer la vérification
-   TLS et la restauration dans la même fenêtre.
+5. Vérifier les 16 états installés et `dpkg --audit`, puis enchaîner le test
+   TLS avec certificat ; proposer la restauration dans l’historique de la fenêtre.
 
 La synchronisation utilise temporairement une règle D-Bus autorisant
 uniquement root à appeler le réglage de l’heure de `timed`. La règle est
