@@ -37,7 +37,7 @@ if [ "$configured" = 0 ]; then
         printf '%s\n' 'PermitEmptyPasswords no'
         cat "$config"
         printf '\n%s\n' '# ResurectPhone USB sans mot de passe'
-        printf '%s\n' 'Match User developer Address 192.168.2.14'
+        printf '%s\n' 'Match User developer Address 192.168.2.0/24'
         printf '%s\n' '    PasswordAuthentication yes'
         printf '%s\n' '    PermitEmptyPasswords yes'
     } > "$temporary"
@@ -64,6 +64,6 @@ if [ -s /var/run/sshd.pid ]; then
     kill -HUP "$(cat /var/run/sshd.pid)" || true
 fi
 
-echo "Accès developer sans mot de passe autorisé depuis le PC USB (192.168.2.14)."
+echo "Accès developer sans mot de passe autorisé depuis le réseau USB (192.168.2.0/24)."
 echo "Les autres adresses gardent PermitEmptyPasswords no. Sauvegarde : $backup"
 echo "Branchez le N9 à un PC et ouvrez ResurectPhone pour créer automatiquement sa clé."

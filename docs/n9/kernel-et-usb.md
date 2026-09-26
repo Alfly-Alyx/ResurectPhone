@@ -119,12 +119,14 @@ autorisé. Une préparation unique depuis le Terminal du N9 est nécessaire.
 
 Le script sauvegarde `/etc/ssh/sshd_config` et `/etc/shadow` sous
 `/var/tmp/resurectphone-ssh-*`, vérifie la configuration avec `sshd -t`, puis
-autorise le compte `developer` sans mot de passe lorsque le PC a l’adresse
-`192.168.2.14`, attribuée par la liaison USB. Les autres adresses gardent
-`PermitEmptyPasswords no`. Le serveur SSH ancien du N9 ne permet pas de
-restreindre cette règle par interface ; un autre hôte utilisant la même adresse
-pourrait aussi en bénéficier. Tout PC ayant physiquement accès à cette liaison
-USB peut obtenir une session `developer`. Le mot de passe administrateur
+autorise le compte `developer` sans mot de passe pour une adresse du sous-réseau
+USB `192.168.2.0/24`. L’adresse habituelle du PC est `192.168.2.14`, mais la
+[documentation Nokia du SDK](https://n9.dy.fi/meego/html/guide/html/Developer_Library_Getting_started_with_Harmattan_using_Qt_SDK_Connecting_the_device_to_Qt_SDK.html)
+permet d’en choisir une autre dans ce sous-réseau. Les adresses extérieures
+gardent `PermitEmptyPasswords no`. Le serveur SSH ancien du N9 ne permet pas de
+restreindre cette règle par interface : un hôte sur un autre réseau utilisant
+aussi une adresse `192.168.2.x` pourrait en bénéficier. Tout PC ayant accès à
+cette liaison USB peut obtenir une session `developer`. Le mot de passe administrateur
 utilisé par `devel-su` n’est pas modifié.
 
 Pour annuler la préparation, depuis `devel-su` sur le N9, restaurer les deux
@@ -132,6 +134,14 @@ fichiers conservés dans le dossier de sauvegarde affiché par le script, puis
 redémarrer le serveur SSH ou le téléphone. Cette sauvegarde contient
 `/etc/shadow` : elle doit rester privée.
 
-La procédure n’a pas encore été exécutée sur le N9 branché. Après son exécution,
-il faudra vérifier l’appairage automatique, relever `uname -r` et confirmer
-que SDK Connectivity ne rétablit pas le mot de passe `developer` au redémarrage.
+Le 26 septembre 2026, le N9 branché répondait sur SSH (`192.168.2.15:22`),
+mais refusait encore une connexion `developer` sans authentification. La
+syntaxe du script a été vérifiée localement pour la règle `192.168.2.0/24` ;
+ResurectPhone se compile avec ce script intégré et ses 25 tests passent.
+
+La préparation n’a pas encore été exécutée sur le N9. Après son exécution,
+tester l’appairage automatique depuis ce PC puis depuis un second PC en mode
+USB SDK, lire `uname -r`, et confirmer après fermeture de SDK Connectivity et
+redémarrage du téléphone que le compte `developer` reste sans mot de passe.
+Si SDK Connectivity le rétablit, la préparation devra être adaptée avant de
+présenter l’appairage universel comme validé.
