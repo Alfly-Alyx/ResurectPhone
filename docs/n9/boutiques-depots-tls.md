@@ -6,7 +6,7 @@ Vérifications et essais du 26 septembre 2026, sur Harmattan PR1.3 RM-696.
 
 | Solution | État trouvé | Proposition dans ResurectPhone |
 | --- | --- | --- |
-| [MeeShop GUI](https://openrepos.net/content/iarchep/meeshop-gui) | 0.8, juillet 2026 ; interface OpenRepos, installation, suppression et mises à jour ; recherche encore incomplète | Installation intégrée. Paquet officiel vérifié et installé sur le N9. Navigation et installation depuis son écran restent à essayer avec Internet sur le téléphone. |
+| [MeeShop GUI](https://openrepos.net/content/iarchep/meeshop-gui) | 0.8, juillet 2026 ; interface OpenRepos, installation, suppression et mises à jour ; recherche encore incomplète | Installation intégrée. Paquet officiel vérifié et installé sur le N9. Démarrage et fenêtre contrôlés sur le N9 ; navigation et installation restent à essayer avec Internet sur le téléphone. |
 | [MeeShop CLI](https://github.com/WunderWungiel/MeeShop) | 0.2.0, 2023 ; dépôt archivé en avril 2025 | Mentionné comme alternative historique. Même identifiant `meeshop` que la GUI : les deux versions se remplacent. |
 | [Warehouse](https://openrepos.net/content/basil/warehouse) | 0.1.9, juillet 2014 | Piste ancienne à retester après correction TLS ; pas d’installation automatique proposée sans validation actuelle. |
 
@@ -42,16 +42,25 @@ son certificat. Le relais accepte uniquement les chemins des miroirs connus
 et disparaît à la fin de l’opération. Le téléphone n’a pas besoin de DNS ni
 d’accès Internet propre pour cette actualisation.
 
-Les anciens fichiers Nokia/RepoMirror, dont certains sont protégés par Aegis,
-restent présents. L’actualisation ResurectPhone les exclut explicitement.
-Un `apt-get update` ordinaire lancé ailleurs pourra donc encore rencontrer
-leurs erreurs. Aucune mise à niveau globale de Harmattan n’est déclenchée.
+Les anciennes adresses connues de `n9repomirror.list` (thecust et les anciens
+chemins coderus) sont désactivées après sauvegarde. Les autres lignes et
+dépôts tiers sont conservés. La correction respecte le propriétaire du
+fichier : sur le téléphone de test, il appartient à `nobody`, et les droits
+limités de root ne permettent pas d’y écrire directement. L’écriture sous
+son propriétaire, la comparaison après écriture et le retour arrière ont
+été essayés. Un `apt-get update` lancé ailleurs peut encore rencontrer les
+erreurs d’autres dépôts tiers. Aucune mise à niveau globale n’est déclenchée.
 
-Sur le téléphone de test, APT signale aussi des dépendances préexistantes
-manquantes pour Facebook et Twitter. L’installation des groupes d’outils
-développeur doit réussir sa simulation avant toute modification ; elle peut
-rester bloquée par cet état. ResurectPhone ne réinstalle pas automatiquement
-ces anciennes applications pour faire disparaître l’erreur.
+La fiche « Réparer les dépendances » reconnaît le cas PR1.3 testé : les
+applications Facebook et Twitter manquantes alors que leurs paquets Nokia
+et le métapaquet système sont encore installés. Elle réinstalle uniquement
+`facebookqml=1.3.2+0m8` et `twitter-qml=1.3.50+0m8`, après simulation stricte.
+Cette réparation a débloqué les neuf groupes développeur, tous installés et
+vérifiés sur le N9. Elle ne rétablit pas les services distants de ces applications.
+
+Pour le traçage, `latrace=0.5.11-1~dc115d0+0m6` vient du miroir Nokia signé.
+La version plus récente du dépôt SDK est refusée par APT faute de signature
+reconnue ; les contrôles d’authenticité restent actifs.
 
 Le [dépôt WunderN9](https://wunderwungiel.pl/MeeGo/wundern9/) contient aussi
 des adaptations communautaires plus récentes. Il reste une piste séparée,

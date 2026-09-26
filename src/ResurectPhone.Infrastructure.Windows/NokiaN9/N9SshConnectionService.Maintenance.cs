@@ -168,6 +168,7 @@ public sealed partial class N9SshConnectionService
                         }
                         // SSH.NET expects octal digits (644), not the decimal value of 0644.
                         transfer.ChangePermissions(path, 644);
+                        await ReleasePackageManagerAsync(client, password, cancellationToken);
                         var script = "set -e\ndpkg -i " + Quote(path) + "\ndpkg-query -W -f='${Status} ${Version}\\n' " + Quote(verified.Metadata.Package);
                         var result = await RunMaintenanceScriptAsync(client, script, password, cancellationToken);
                         RequireSuccess(result, "L’installation a été refusée par Harmattan (dépendances ou provenance Aegis).");
@@ -282,6 +283,7 @@ public sealed partial class N9SshConnectionService
                     throw new N9ConnectionException("La suppression normale rencontre un blocage.\n" + LimitOutput(simulation.Output));
                 return await WithAdministratorAsync(client, administratorPassword, async password =>
                 {
+                    await ReleasePackageManagerAsync(client, password, cancellationToken);
                     var command = forceDependencies
                         ? N9PackageCommands.BuildExpertRemovalCommand(app.Metadata, true)
                         : N9PackageCommands.BuildStandardRemovalCommand(app.Metadata);

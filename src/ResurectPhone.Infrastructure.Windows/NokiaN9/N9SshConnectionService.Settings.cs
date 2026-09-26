@@ -104,18 +104,4 @@ public sealed partial class N9SshConnectionService
         print('Demandes de compte desactivees dans Cartes et Drive.')
         """;
 
-    internal static string BuildRepositoryScript(string backup, IEnumerable<string> sources, string aptOptions = "")
-    {
-        const string target = "/etc/apt/sources.list.d/resurectphone.list";
-        var restore = "if [ -f ./sources.saved ]; then cat ./sources.saved > " + target +
-            "; elif [ -f ./sources.absent ]; then rm -f " + target + "; fi";
-        return BackupPreamble(backup, restore) +
-            "if test -f " + target + "; then cat " + target + " > \"$backup/sources.saved\"; else touch \"$backup/sources.absent\"; fi\n" +
-            SettingsRollback + "\nchanged=1\ncat > " + target + " <<'RESURECTPHONE_SOURCES'\n" + string.Join('\n', sources) +
-            "\nRESURECTPHONE_SOURCES\nchmod 644 " + target +
-            "\napt-get -o Dir::Etc::sourcelist=" + target + " -o Dir::Etc::sourceparts=- -o APT::Get::List-Cleanup=false" + aptOptions + " update > \"$backup/update.log\" 2>&1\ncat \"$backup/update.log\"\n" +
-            "if grep -qE '^(Err |W: Failed to fetch|W: GPG error|E:)' \"$backup/update.log\"; then echo 'Index non entièrement validés.' >&2; exit 1; fi" +
-            "\nfinished=1\necho 'Sources ResurectPhone enregistrées et index actualisés. Les anciennes sources sont conservées, mais exclues de cette actualisation. Aucun paquet mis à jour automatiquement.'\n";
-    }
-
 }

@@ -44,7 +44,7 @@ public sealed partial class N9SshConnectionService
                 var redacted = Regex.Replace(sources.Output, @"://[^/\s@]+@", "://[identifiants]@");
                 return new N9MaintenanceReport(probes.All(probe => probe.Available) ? "Miroirs Harmattan et SDK accessibles" : "Miroirs incomplets ou indisponibles",
                     "Sources du téléphone :\n" + redacted + "\nContrôle depuis le PC :\n" + string.Join('\n', probes.Select(probe => probe.Detail)) +
-                    "\nLes téléchargements passent par le PC et le câble USB, avec contrôle HTTPS. Les sources ResurectPhone sont sauvegardées avant modification. Les anciennes sources sont conservées et exclues de cette actualisation. Aucun paquet système n’est mis à niveau automatiquement.",
+                    "\nLes téléchargements passent par le PC et le câble USB, avec contrôle HTTPS. Les sources ResurectPhone sont sauvegardées avant modification. Les anciennes adresses connues de N9 RepoMirror sont désactivées avec sauvegarde. Les autres dépôts sont conservés et exclus de cette actualisation. Aucun paquet système n’est mis à niveau automatiquement.",
                     probes.All(probe => probe.Available), "Réparer les dépôts et actualiser");
             }, cancellationToken);
         }
@@ -61,10 +61,11 @@ public sealed partial class N9SshConnectionService
             }, cancellationToken);
         return await WithMaintenanceClientAsync(async (client, _) =>
         {
+            if (featureId == "n9.dependencies") return await DiagnoseDependenciesAsync(client, cancellationToken);
             if (N9MaintenanceCatalog.DeveloperPackages.TryGetValue(featureId, out var packages))
             {
                 var joined = string.Join(' ', packages.Select(Quote));
-                var result = await RunMaintenanceScriptAsync(client, "apt-cache policy " + joined + "\napt-get -s --no-remove install " + joined, null, cancellationToken);
+                var result = await RunMaintenanceScriptAsync(client, "apt-cache policy " + string.Join(' ', packages.Select(package => Quote(package.Split('=')[0]))) + "\napt-get -s" + AptInstallOptions + " install " + joined, null, cancellationToken);
                 var applicable = result.Status == 0 && ParseAptRemovals(result.Output).Count == 0;
                 return new N9MaintenanceReport(applicable ? "Installation simulée" :
                     result.Output.Contains("Unmet dependencies", StringComparison.Ordinal) ? "Dépendances à résoudre" : "Paquets ou dépôts manquants",
@@ -120,18 +121,22 @@ public sealed partial class N9SshConnectionService
                 throw new N9ConnectionException("Aucun miroir Harmattan vérifié n’est actuellement accessible. Les dépôts du téléphone n’ont pas été modifiés.");
             return await WithMaintenanceClientAsync((client, _) => WithAdministratorAsync(client, administratorPassword, async password =>
             {
+                if (featureId == "n9.dependencies") return await RepairDependenciesAsync(client, password, cancellationToken);
                 if (N9MaintenanceCatalog.DeveloperPackages.TryGetValue(featureId, out var packages))
                 {
                     await using var relay = new N9RepositoryRelay(client);
                     var joined = string.Join(' ', packages.Select(Quote));
-                    var preview = await RunMaintenanceScriptAsync(client, "apt-get -s --no-remove install " + joined, null, cancellationToken);
+                    var preview = await RunMaintenanceScriptAsync(client, "apt-get -s" + AptInstallOptions + " install " + joined, null, cancellationToken);
                     RequireSuccess(preview, "Des paquets développeur ou leurs dépendances sont absents des dépôts.");
                     if (ParseAptRemovals(preview.Output).Count > 0) throw new N9ConnectionException("L’installation supprimerait d’autres paquets.");
-                    var install = await RunMaintenanceScriptAsync(client, "set -e\nexport DEBIAN_FRONTEND=noninteractive\napt-get -y --no-remove install " + joined +
-                        relay.AptOptions + "\nfor package in " + joined + "; do test \"$(dpkg-query -W -f='${Status}' \"$package\")\" = 'install ok installed'; done", password, cancellationToken);
+                    await ReleasePackageManagerAsync(client, password, cancellationToken);
+                    var install = await RunMaintenanceScriptAsync(client, "set -e\nexport DEBIAN_FRONTEND=noninteractive\napt-get -y" + AptInstallOptions + " install " + joined +
+                        relay.AptOptions + "\nfor spec in " + joined + "; do package=${spec%%=*}; test \"$(dpkg-query -W -f='${Status}' \"$package\")\" = 'install ok installed'; " +
+                        "case \"$spec\" in *=*) test \"$(dpkg-query -W -f='${Version}' \"$package\")\" = \"${spec#*=}\";; esac; done\napt-get check", password, cancellationToken, TimeSpan.FromMinutes(10));
                     RequireSuccess(install, "Installation interrompue ; consultez le rapport APT.");
                     return new N9MaintenanceReport("Outils installés et vérifiés", string.Join(", ", packages) + "\n" + LimitOutput(install.Output));
                 }
+                if (featureId == "n9.repositories") await ReleasePackageManagerAsync(client, password, cancellationToken);
                 var backup = "/var/lib/resurectphone/maintenance/" + Guid.NewGuid().ToString("N");
                 await using var repositoryRelay = featureId == "n9.repositories" ? new N9RepositoryRelay(client) : null;
                 var script = featureId switch
@@ -160,7 +165,8 @@ public sealed partial class N9SshConnectionService
                 throw new ArgumentException("Dossier de sauvegarde ResurectPhone invalide.");
             return await WithMaintenanceClientAsync((client, _) => WithAdministratorAsync(client, administratorPassword, async password =>
             {
-                var result = await RunMaintenanceScriptAsync(client, "sh " + backupPath + "/restore.sh", password, cancellationToken, TimeSpan.FromMinutes(10));
+                var restore = "if test -f " + backupPath + "/packages-before; then\n" + ReleaseIdlePackageManager + "\nfi\nsh " + backupPath + "/restore.sh";
+                var result = await RunMaintenanceScriptAsync(client, restore, password, cancellationToken, TimeSpan.FromMinutes(10));
                 RequireSuccess(result, "La restauration a échoué.");
                 return new N9MaintenanceReport("Réglages restaurés", LimitOutput(result.Output));
             }, cancellationToken), cancellationToken);

@@ -62,6 +62,15 @@ public static class RecoveryCatalog
             RecoveryAvailability.Researching,
             PhoneCapability.ManageRepositories),
         new(
+            "n9.dependencies",
+            RecoveryArea.StoresAndApplications,
+            "Réparer les dépendances",
+            "Rétablir les applications Nokia manquantes dans leurs versions compatibles pour débloquer les installations.",
+            N9,
+            RecoveryRisk.SystemChange,
+            RecoveryAvailability.Ready,
+            PhoneCapability.InstallPackages),
+        new(
             "n9.nokia-store",
             RecoveryArea.StoresAndApplications,
             "Nokia Store d’origine",

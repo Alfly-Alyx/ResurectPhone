@@ -86,6 +86,7 @@ public sealed partial class N9SshConnectionService
                     await Task.Run(() => transfer.UploadFile(source, target), cancellationToken);
                     transfer.ChangePermissions(target, 644);
                 }
+                await ReleasePackageManagerAsync(client, password, cancellationToken);
                 var result = await RunMaintenanceScriptAsync(client, BuildTlsInstallScript(backup, staging), password, cancellationToken,
                     TimeSpan.FromMinutes(10));
                 if (result.Status != 0)
