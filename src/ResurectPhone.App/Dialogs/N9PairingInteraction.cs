@@ -3,12 +3,19 @@ using System.Windows;
 using Microsoft.Win32;
 using ResurectPhone.App.Presentation;
 using ResurectPhone.Core.NokiaN9;
+using ResurectPhone.Core.Recovery;
 using ResurectPhone.Infrastructure.Windows.NokiaN9;
 
 namespace ResurectPhone.App.Dialogs;
 
 public sealed class N9PairingInteraction(Func<Window?> ownerProvider) : IN9PairingInteraction
 {
+    public void ShowMaintenance(RecoveryFeature feature, IN9MaintenanceService service)
+    {
+        var dialog = new N9MaintenanceDialog(feature, service, RequestAdministratorPassword) { Owner = ownerProvider() };
+        dialog.ShowDialog();
+    }
+
     public string? RequestTemporaryPassword()
     {
         var dialog = new N9PairingDialog { Owner = ownerProvider() };

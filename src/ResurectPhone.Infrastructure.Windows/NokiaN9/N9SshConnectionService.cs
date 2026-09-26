@@ -8,7 +8,7 @@ using ResurectPhone.Core.NokiaN9;
 
 namespace ResurectPhone.Infrastructure.Windows.NokiaN9;
 
-public sealed partial class N9SshConnectionService : IN9ConnectionService
+public sealed partial class N9SshConnectionService : IN9ConnectionService, IN9MaintenanceService
 {
     public const string DefaultUsbHost = "192.168.2.15";
     public const int DefaultPort = 22;
@@ -183,6 +183,7 @@ public sealed partial class N9SshConnectionService : IN9ConnectionService
             "printf 'HOSTNAME\\t%s\\n' \"$(hostname 2>/dev/null | head -n 1)\"; " +
             "printf 'PRODUCT_NAME\\t%s\\n' \"$(sysinfoclient -p /component/product-name 2>/dev/null)\"; " +
             "printf 'PRODUCT_CODE\\t%s\\n' \"$(sysinfoclient -p /component/product 2>/dev/null)\"; " +
+            "printf 'SALES_CODE\\t%s\\n' \"$(sysinfoclient -p /device/product-code 2>/dev/null)\"; " +
             "printf 'HARMATTAN\\t'; if test -e /etc/harmattan-release || test -e /etc/osso_software_version || printf '%s' \"$software\" | grep -qi harmattan; then printf '1'; else printf '0'; fi; printf '\\n'; " +
             "printf 'RELEASE\\t%s\\n' \"$(cat /etc/harmattan-release /etc/meego-release /etc/issue 2>/dev/null | sed -n '/[^[:space:]]/{p;q;}')\"; " +
             "printf 'SYSTEM_ID\\t%s\\n' \"$(sed -n 's/^ID=//p' /etc/os-release 2>/dev/null | head -n 1 | tr -d '\"')\"; " +
@@ -243,6 +244,7 @@ public sealed partial class N9SshConnectionService : IN9ConnectionService
             Hostname = Value("HOSTNAME"),
             ProductName = string.IsNullOrWhiteSpace(Value("PRODUCT_NAME")) ? "Nokia N9" : Value("PRODUCT_NAME"),
             ProductCode = Value("PRODUCT_CODE"),
+            SalesCode = Value("SALES_CODE"),
             SystemName = harmattan ? "MeeGo Harmattan" : fallbackName,
             SystemVersion = version,
             SystemBuild = softwareVersion,

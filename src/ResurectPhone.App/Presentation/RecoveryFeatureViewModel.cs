@@ -1,11 +1,12 @@
 using ResurectPhone.Core.Devices;
 using ResurectPhone.Core.Recovery;
+using ResurectPhone.Core.NokiaN9;
 
 namespace ResurectPhone.App.Presentation;
 
 public sealed class RecoveryFeatureViewModel
 {
-    public RecoveryFeatureViewModel(RecoveryFeature feature, DetectedPhone? phone)
+    public RecoveryFeatureViewModel(RecoveryFeature feature, DetectedPhone? phone, Action<RecoveryFeature>? execute = null)
     {
         Title = feature.Title;
         Description = feature.Description;
@@ -30,6 +31,15 @@ public sealed class RecoveryFeatureViewModel
         };
         IsAvailable = feature.Availability == RecoveryAvailability.Ready && IsCompatible;
         ActionText = isDeveloperTool ? "Installer" : "Commencer";
+        if (feature.SupportedPlatforms.Contains(PhonePlatform.MeeGoHarmattan) && N9MaintenanceCatalog.FeatureIds.Contains(feature.Id) &&
+            phone?.Platform == PhonePlatform.MeeGoHarmattan)
+        {
+            IsCompatible = true;
+            IsAvailable = execute is not null;
+            StatusText = IsAvailable ? (feature.Id is "n9.firmware" or "n9.nokia-store" ? "Diagnostic disponible" : "Prêt à vérifier") : "Connexion SSH requise";
+            ActionText = "Ouvrir";
+        }
+        ActionCommand = new RelayCommand(() => execute?.Invoke(feature), () => IsAvailable && execute is not null);
     }
 
     public string Title { get; }
@@ -39,4 +49,5 @@ public sealed class RecoveryFeatureViewModel
     public string ActionText { get; }
     public bool IsCompatible { get; }
     public bool IsAvailable { get; }
+    public RelayCommand ActionCommand { get; }
 }

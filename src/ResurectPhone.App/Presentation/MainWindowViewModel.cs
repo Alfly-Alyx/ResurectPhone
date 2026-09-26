@@ -41,6 +41,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private bool _n9SetupStaged;
     private bool _n9PasswordPrompted;
     private bool _n9UsbPreparationAttempted;
+    private bool _isN9MaintenanceOpen;
     private bool _autoOpenedN9;
     private DateTime _lastN9AutoAttemptUtc = DateTime.MinValue;
     private string? _androidSerial;
@@ -314,7 +315,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public async Task AutoDiscoverN9Async()
     {
-        if (_isAutoDiscoveringN9 || IsScanning || IsConnectingN9 ||
+        if (_isN9MaintenanceOpen || _isAutoDiscoveringN9 || IsScanning || IsConnectingN9 ||
             (!IsHome && !IsN9Family))
             return;
 
@@ -926,7 +927,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             ? RecoveryCatalog.ForAreaAndPlatforms(area, SelectedSection.Platforms)
             : RecoveryCatalog.ForPlatforms(SelectedSection.Platforms);
         foreach (var feature in features)
-            SelectedFeatures.Add(new RecoveryFeatureViewModel(feature, _connectedPhone));
+            SelectedFeatures.Add(new RecoveryFeatureViewModel(feature, _connectedPhone,
+                IsN9Family && _n9Identified && _n9Connection is IN9MaintenanceService ? OpenN9Feature : null));
+    }
+
+    private void OpenN9Feature(RecoveryFeature feature)
+    {
+        if (_isN9MaintenanceOpen || !_n9Identified || _n9Connection is not IN9MaintenanceService service) return;
+        _isN9MaintenanceOpen = true;
+        try { _n9PairingInteraction.ShowMaintenance(feature, service); }
+        finally { _isN9MaintenanceOpen = false; }
     }
 
     private static string Describe(DetectedPhone phone)

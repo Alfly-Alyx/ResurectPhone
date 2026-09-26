@@ -1,4 +1,5 @@
 using ResurectPhone.Core.Devices;
+using ResurectPhone.Core.NokiaN9;
 
 namespace ResurectPhone.Core.Recovery;
 
@@ -55,7 +56,7 @@ public static class RecoveryCatalog
             "n9.repositories",
             RecoveryArea.StoresAndApplications,
             "Dépôts et mises à jour",
-            "Remplacer les anciens dépôts par des sources fonctionnelles et remettre les applications à jour.",
+            "Configurer les miroirs Harmattan et SDK vérifiés, puis actualiser leurs index par USB.",
             N9,
             RecoveryRisk.SystemChange,
             RecoveryAvailability.Researching,
@@ -64,7 +65,7 @@ public static class RecoveryCatalog
             "n9.nokia-store",
             RecoveryArea.StoresAndApplications,
             "Nokia Store d’origine",
-            "Rendre de nouveau fonctionnelle l’application Nokia Store installée sur le N9.",
+            "Vérifier le client Nokia Store installé et les prérequis manquants pour rétablir son service distant.",
             N9,
             RecoveryRisk.SystemChange,
             RecoveryAvailability.Researching,
@@ -73,7 +74,7 @@ public static class RecoveryCatalog
             "n9.alternative-stores",
             RecoveryArea.StoresAndApplications,
             "Boutiques alternatives",
-            "Présenter les catalogues compatibles et installer une application choisie en un clic.",
+            "Installer la boutique MeeShop depuis sa publication officielle et vérifier le résultat sur Harmattan.",
             N9,
             RecoveryRisk.ReversibleChange,
             RecoveryAvailability.Planned,
@@ -100,7 +101,7 @@ public static class RecoveryCatalog
             "n9.internet",
             RecoveryArea.Internet,
             "Navigation Internet",
-            "Actualiser les certificats et le chiffrement, en conservant le navigateur d’origine en priorité.",
+            "Installer le correctif TLS 1.2 et les certificats pour Harmattan PR1.3, avec paquets Nokia de restauration.",
             N9,
             RecoveryRisk.SystemChange,
             RecoveryAvailability.Researching,
@@ -118,7 +119,7 @@ public static class RecoveryCatalog
             "n9.account",
             RecoveryArea.NokiaAccount,
             "Compte Nokia",
-            "Désactiver la demande de connexion aux services Nokia disparus.",
+            "Désactiver les demandes de compte Nokia dans Cartes et Drive avec sauvegarde et retour arrière.",
             N9,
             RecoveryRisk.ReversibleChange,
             RecoveryAvailability.Planned),
@@ -140,7 +141,7 @@ public static class RecoveryCatalog
             RecoveryRisk.SystemChange,
             RecoveryAvailability.Researching,
             PhoneCapability.InstallPackages,
-            [ "gdb", "gdbserver" ]),
+            N9MaintenanceCatalog.DeveloperPackages["n9.devtools.debugging"]),
         new(
             "n9.devtools.networking",
             RecoveryArea.DeveloperTools,
@@ -150,7 +151,7 @@ public static class RecoveryCatalog
             RecoveryRisk.SystemChange,
             RecoveryAvailability.Researching,
             PhoneCapability.InstallPackages,
-            [ "devtools-networking" ]),
+            N9MaintenanceCatalog.DeveloperPackages["n9.devtools.networking"]),
         new(
             "n9.devtools.resources",
             RecoveryArea.DeveloperTools,
@@ -160,7 +161,7 @@ public static class RecoveryCatalog
             RecoveryRisk.SystemChange,
             RecoveryAvailability.Researching,
             PhoneCapability.InstallPackages,
-            [ "devtools-memory" ]),
+            N9MaintenanceCatalog.DeveloperPackages["n9.devtools.resources"]),
         new(
             "n9.devtools.power",
             RecoveryArea.DeveloperTools,
@@ -170,7 +171,7 @@ public static class RecoveryCatalog
             RecoveryRisk.SystemChange,
             RecoveryAvailability.Researching,
             PhoneCapability.InstallPackages,
-            [ "devtools-power-resource" ]),
+            N9MaintenanceCatalog.DeveloperPackages["n9.devtools.power"]),
         new(
             "n9.devtools.performance",
             RecoveryArea.DeveloperTools,
@@ -180,7 +181,7 @@ public static class RecoveryCatalog
             RecoveryRisk.SystemChange,
             RecoveryAvailability.Researching,
             PhoneCapability.InstallPackages,
-            [ "devtools-endurance" ]),
+            N9MaintenanceCatalog.DeveloperPackages["n9.devtools.performance"]),
         new(
             "n9.devtools.tracing",
             RecoveryArea.DeveloperTools,
@@ -190,7 +191,7 @@ public static class RecoveryCatalog
             RecoveryRisk.SystemChange,
             RecoveryAvailability.Researching,
             PhoneCapability.InstallPackages,
-            [ "devtools-tracers" ]),
+            N9MaintenanceCatalog.DeveloperPackages["n9.devtools.tracing"]),
         new(
             "n9.devtools.test-automation",
             RecoveryArea.DeveloperTools,
@@ -200,7 +201,7 @@ public static class RecoveryCatalog
             RecoveryRisk.SystemChange,
             RecoveryAvailability.Researching,
             PhoneCapability.InstallPackages,
-            [ "qttas" ]),
+            N9MaintenanceCatalog.DeveloperPackages["n9.devtools.test-automation"]),
         new(
             "n9.devtools.utilities",
             RecoveryArea.DeveloperTools,
@@ -210,7 +211,7 @@ public static class RecoveryCatalog
             RecoveryRisk.SystemChange,
             RecoveryAvailability.Researching,
             PhoneCapability.InstallPackages,
-            [ "devtools-utilities", "devtools-x11-utilities" ]),
+            N9MaintenanceCatalog.DeveloperPackages["n9.devtools.utilities"]),
         new(
             "n9.devtools.logging",
             RecoveryArea.DeveloperTools,
@@ -220,7 +221,7 @@ public static class RecoveryCatalog
             RecoveryRisk.SystemChange,
             RecoveryAvailability.Researching,
             PhoneCapability.InstallPackages,
-            [ "sysklogd" ]),
+            N9MaintenanceCatalog.DeveloperPackages["n9.devtools.logging"]),
         new(
             "windows-phone.alternative-stores",
             RecoveryArea.StoresAndApplications,

@@ -5,18 +5,21 @@
 Ces règles proviennent d’essais effectués sur un Nokia N9 réel sous Harmattan.
 Elles sont des contraintes de conception de ResurectPhone, pas de simples pistes.
 Un cycle complet d’installation et de suppression a été validé sur une
-application tierce jetable. Les actions restent désactivées dans l’interface
-tant que leur orchestration complète, les confirmations et le rapport de fin
-n’y sont pas encore reliés.
+application tierce jetable. Les parcours sont désormais reliés à une fenêtre
+de maintenance : diagnostic, choix du paquet ou de l’application, exécution,
+rapport et sauvegarde avant suppression.
 
 ## Suppression d’une application
 
 ResurectPhone doit toujours essayer d’abord la suppression normale avec
-`apt-get remove`. Un paquet n’est pas bloqué uniquement parce qu’il est
+`dpkg --no-act --remove`, puis `dpkg --remove`. Ces commandes vérifient
+les dépendances de la suppression choisie sans réparer des dépendances cassées
+sans rapport avec elle. Un paquet n’est pas bloqué uniquement parce qu’il est
 référencé par le méta-paquet Harmattan : ce cas concerne notamment des
 applications visibles comme `twitter-qml`.
 
-Si APT refuse seulement à cause des dépendances, une seconde action peut être
+Si la suppression normale est refusée et qu’une simulation APT confirme
+un blocage de dépendances impliquant ce paquet, une seconde action peut être
 proposée dans le mode Expert, avec un avertissement et une confirmation
 distincts. La commande de repli validée est
 `dpkg --force-depends --remove <paquet>`.
@@ -37,7 +40,7 @@ propriétaire, ResurectPhone essaie systématiquement le mot de passe d’usine
 lorsqu’un mot de passe personnalisé vient d’être fourni. Le secret est envoyé
 uniquement sur l’entrée standard, jamais dans la ligne de commande ni les
 journaux, puis ses buffers sont effacés en mémoire. La préparation USB utilise
-ce parcours ; les futures opérations de maintenance devront le réutiliser.
+ce parcours, également utilisé par les opérations de maintenance.
 
 ## Sauvegarde en `.deb`
 
@@ -65,8 +68,9 @@ comme ARMEL, version `1.2.0.2+0m7`.
 
 ## Validation avant installation
 
-`dpkg-deb -f` n’est pas utilisé sur le N9. ResurectPhone extrait le fichier
-`control` avec la chaîne compatible testée :
+Le parcours intégré vérifie le conteneur ar et extrait le fichier `control`
+sur le PC avant tout transfert. L’ancienne chaîne de diagnostic compatible
+avec le N9 reste :
 
 ```text
 busybox ar -p <paquet.deb> control.tar.gz | busybox tar -xzOf - ./control
@@ -99,19 +103,14 @@ capacité d’installer et de supprimer un `.deb` tiers valide est donc acquise 
 le cas restant est le remplacement ou la restauration d’un paquet déjà installé
 et protégé par une origine Aegis différente.
 
-## Dépôts observés sur le téléphone de test
+## Dépôts du téléphone de test
 
-ResurectPhone doit aussi contrôler
-`/etc/apt/sources.list.d/n9repomirror.list`. Les lignes fonctionnelles observées
-sont :
+Les anciennes lignes trouvées dans `n9repomirror.list` pointaient vers
+`mirror.thecust.net/harmattan-dev.nokia.com/` et `coderus.openrepos.net/n9mirro/`.
+Leur présence ne signifie pas qu’elles fonctionnent : elles ont échoué lors
+de la vérification du 26 septembre 2026, et `n9mirro` est un chemin incorrect.
 
-```text
-deb http://mirror.thecust.net/harmattan-dev.nokia.com/ ./
-deb http://coderus.openrepos.net/n9mirro/ ./
-```
-
-Avant toute modification, le fichier existant devra être sauvegardé. Ces URLs
-seront vérifiées en ligne au moment où la réparation des dépôts sera activée ;
-leur simple présence dans ce document ne constitue pas une garantie permanente.
-Les paquets embarqués par ResurectPhone restent prioritaires. Une dépendance
-absente ou inaccessible doit être signalée séparément d’un refus Aegis.
+La réparation intégrée écrit un fichier distinct `resurectphone.list` avec les
+miroirs WunderWungiel vérifiés. Les anciennes sources protégées par Aegis
+restent présentes, mais sont exclues de cette actualisation. Voir
+[le bilan des boutiques, dépôts et TLS](boutiques-depots-tls.md).

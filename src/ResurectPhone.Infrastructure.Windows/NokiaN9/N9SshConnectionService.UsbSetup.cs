@@ -147,15 +147,15 @@ public sealed partial class N9SshConnectionService
     }
 
     private static async Task<(int? Status, string Output)> ExecuteAdministratorAsync(
-        SshClient client, string commandText, byte[] password, CancellationToken cancellationToken)
+        SshClient client, string commandText, byte[] password, CancellationToken cancellationToken, TimeSpan? timeout = null)
     {
         using var command = client.CreateCommand(N9PackageCommands.WrapWithDevelSu(commandText));
-        command.CommandTimeout = TimeSpan.FromMinutes(2);
+        command.CommandTimeout = timeout ?? TimeSpan.FromMinutes(2);
         var execution = command.ExecuteAsync(cancellationToken);
         using (var input = command.CreateInputStream())
             await N9PackageCommands.SendPasswordToStandardInputAsync(input, password.ToArray(), cancellationToken);
         await execution;
         // Never surface raw administrator output, which may contain account data.
-        return (command.ExitStatus, command.Result);
+        return (command.ExitStatus, command.Result + command.Error);
     }
 }

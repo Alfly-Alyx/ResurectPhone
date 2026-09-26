@@ -420,7 +420,7 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{Binding RiskText}" FontSize="11"
                                                        Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" />
-                                            <Button Grid.Column="1" Content="{Binding ActionText}" IsEnabled="{Binding IsAvailable}" />
+                                            <Button Grid.Column="1" Content="{Binding ActionText}" IsEnabled="{Binding IsAvailable}" Command="{Binding ActionCommand}" />
                                         </Grid>
                                     </Grid>
                                 </Border>

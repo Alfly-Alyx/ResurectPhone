@@ -21,6 +21,7 @@ public sealed record N9DeviceDetails
     public string Hostname { get; init; } = string.Empty;
     public string ProductName { get; init; } = string.Empty;
     public string ProductCode { get; init; } = string.Empty;
+    public string SalesCode { get; init; } = string.Empty;
     public string SystemName { get; init; } = string.Empty;
     public string SystemVersion { get; init; } = string.Empty;
     public string SystemBuild { get; init; } = string.Empty;

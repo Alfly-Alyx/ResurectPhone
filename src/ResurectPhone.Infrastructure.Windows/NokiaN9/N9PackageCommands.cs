@@ -7,12 +7,6 @@ namespace ResurectPhone.Infrastructure.Windows.NokiaN9;
 
 internal static partial class N9PackageCommands
 {
-    public static IReadOnlyList<string> VerifiedMirrorSourceLines { get; } =
-    [
-        "deb http://mirror.thecust.net/harmattan-dev.nokia.com/ ./",
-        "deb http://coderus.openrepos.net/n9mirro/ ./"
-    ];
-
     public static string ExportScript => NormalizeLf(ExportScriptSource);
 
     public static string BuildInspectControlCommand(string remotePackagePath) =>
@@ -36,7 +30,7 @@ internal static partial class N9PackageCommands
     public static string BuildStandardRemovalCommand(N9DebPackageMetadata metadata)
     {
         ThrowIfProtected(metadata);
-        return $"apt-get -y remove {metadata.Package}";
+        return $"dpkg --remove {metadata.Package}";
     }
 
     public static string BuildExpertRemovalCommand(
@@ -121,11 +115,13 @@ internal static partial class N9PackageCommands
         control_archive="$3"
         data_archive="$4"
         case "$work" in /var/tmp/resurectphone-*) ;; *) exit 64 ;; esac
+        case "$work" in *..*|*[!A-Za-z0-9_/-]*) exit 64 ;; esac
         list="/var/lib/dpkg/info/$package.list"
         test -r "$list"
         rm -rf "$work"
         mkdir -p "$work/control" "$work/data"
         while IFS= read -r path; do
+            case "$path" in */../*|*/..|*/./*) echo 'Chemin de paquet invalide.' >&2; exit 64 ;; esac
             case "$path" in
                 /|.|'') continue ;;
                 /*)
@@ -144,6 +140,7 @@ internal static partial class N9PackageCommands
             if test -e "$source"; then cp -a "$source" "$work/control/$suffix"; fi
         done
         dpkg-query -W -f='Package: ${Package}\nVersion: ${Version}\nArchitecture: ${Architecture}\nMaintainer: ${Maintainer}\nSection: ${Section}\nPriority: ${Priority}\nEssential: ${Essential}\nPre-Depends: ${Pre-Depends}\nDepends: ${Depends}\nRecommends: ${Recommends}\nSuggests: ${Suggests}\nConflicts: ${Conflicts}\nReplaces: ${Replaces}\nProvides: ${Provides}\nDescription: ${Description}\n' "$package" > "$work/control/control"
+        printf 'X-ResurectPhone-Backup: DebianArchiveOnly\n' >> "$work/control/control"
         (cd "$work/control" && busybox tar -czf "$control_archive" .)
         (cd "$work/data" && busybox tar -czf "$data_archive" .)
         chmod 0644 "$control_archive" "$data_archive"

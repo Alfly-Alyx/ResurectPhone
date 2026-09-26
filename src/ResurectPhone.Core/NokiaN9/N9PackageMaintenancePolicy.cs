@@ -126,7 +126,8 @@ public static partial class N9PackageMaintenancePolicy
             if (separator <= 0)
                 throw new InvalidDataException("Le fichier control du paquet Debian est mal formé.");
             currentName = line[..separator].Trim();
-            fields[currentName] = line[(separator + 1)..].Trim();
+            if (!fields.TryAdd(currentName, line[(separator + 1)..].Trim()))
+                throw new InvalidDataException("Le fichier control contient un champ dupliqué.");
         }
         return fields;
     }
