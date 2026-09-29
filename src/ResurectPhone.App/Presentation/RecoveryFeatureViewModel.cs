@@ -48,6 +48,7 @@ public sealed class RecoveryFeatureViewModel
                 "n9.package-backup" => "Sauvegarder",
                 "n9.package-install" => "Installer un .deb",
                 "n9.cleanup" => "Choisir et supprimer",
+                "n9.networks" => "Gérer les réseaux et le SDK",
                 "n9.internet" => "Installer ou vérifier TLS",
                 "n9.gps" => "Configurer GPS et Cartes",
                 "n9.account" => "Supprimer les demandes",

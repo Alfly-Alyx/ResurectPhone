@@ -1,0 +1,44 @@
+<Window x:Class="ResurectPhone.App.Dialogs.N9NetworkDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Wi-Fi et accès SDK — Nokia N9" Width="850" Height="740" MinWidth="550" MinHeight="420"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+    <DockPanel Margin="24">
+        <WrapPanel DockPanel.Dock="Bottom" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button x:Name="RefreshButton" Content="Actualiser" Click="Refresh_Click" Margin="0,0,8,0"/>
+            <Button x:Name="CloseButton" Content="Fermer" Click="Close_Click"/>
+        </WrapPanel>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,0,12,0">
+                <TextBlock Text="Wi-Fi et accès SDK" FontSize="23" FontWeight="SemiBold"/>
+                <TextBlock x:Name="ConnectionText" Margin="0,12,0,12" TextWrapping="Wrap"/>
+                <StackPanel x:Name="Actions">
+                    <TextBlock Text="Réseaux enregistrés sur le N9" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <ComboBox x:Name="Profiles" DisplayMemberPath="DisplayName" Margin="0,0,0,12"/>
+                    <WrapPanel>
+                        <Button Content="Connecter" Click="Connect_Click" Margin="0,0,8,8"/>
+                        <Button Content="Connexion automatique" Click="Automatic_Click" Margin="0,0,8,8"/>
+                        <Button Content="Forcer la reconnexion" Style="{StaticResource PrimaryButton}" Click="Force_Click" Margin="0,0,8,8"/>
+                        <Button Content="Connexion manuelle" Click="Manual_Click" Margin="0,0,8,8"/>
+                        <Button x:Name="DisconnectButton" Content="Déconnecter" Click="Disconnect_Click" Margin="0,0,8,8"/>
+                    </WrapPanel>
+                    <TextBlock Text="La reconnexion forcée fonctionne sur le N9 même lorsque ResurectPhone est fermé. Elle respecte le mode avion et l’arrêt du Wi-Fi. Pour changer de réseau ou couper le Wi-Fi, reliez le N9 en USB." TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}"/>
+                    <Button Content="Rechercher les réseaux à portée" Click="Scan_Click" HorizontalAlignment="Left" Margin="0,12,0,8"/>
+                    <TextBlock x:Name="VisibleNetworks" TextWrapping="Wrap"/>
+                    <TextBlock Text="SDK sans mot de passe" FontSize="18" FontWeight="SemiBold" Margin="0,24,0,8"/>
+                    <TextBlock x:Name="SdkState" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                    <TextBlock Text="En mode USB et Wi-Fi, tout appareil pouvant joindre le N9 par le réseau peut ouvrir un accès développeur. Ce réglage concerne le SDK ; le mot de passe du réseau Wi-Fi et celui de l’administrateur restent distincts." TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,12"/>
+                    <WrapPanel>
+                        <Button Content="Sans mot de passe : USB" Click="SdkUsb_Click" Margin="0,0,8,8"/>
+                        <Button Content="Sans mot de passe : USB et Wi-Fi" Click="SdkWifi_Click" Margin="0,0,8,8"/>
+                    </WrapPanel>
+                    <TextBlock Text="Réglages précédents" FontWeight="SemiBold" Margin="0,16,0,8"/>
+                    <ComboBox x:Name="Backups" DisplayMemberPath="DisplayName" Margin="0,0,0,8"/>
+                    <Button Content="Restaurer les réglages sélectionnés" Click="Restore_Click" HorizontalAlignment="Left"/>
+                </StackPanel>
+                <ProgressBar x:Name="Progress" Height="5" Margin="0,16,0,12" IsIndeterminate="True" Visibility="Collapsed"/>
+                <TextBlock x:Name="Result" TextWrapping="Wrap" Margin="0,16,0,0"/>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

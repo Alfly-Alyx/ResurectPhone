@@ -43,6 +43,9 @@ public sealed record N9UsbAccessResult(bool AlreadyConfigured, string BackupPath
 public interface IN9ConnectionService
 {
     bool HasPairing { get; }
+    string? SavedAddress { get; }
+    Task<N9ConnectionStatus> ConnectAtAddressAsync(string address, string? temporaryPassword = null,
+        Func<N9HostKeyIdentity, bool>? approveHostKey = null, CancellationToken cancellationToken = default);
 
     Task<N9ConnectionStatus> PairAsync(
         string temporaryPassword,

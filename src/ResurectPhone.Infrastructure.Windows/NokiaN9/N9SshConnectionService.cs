@@ -8,7 +8,7 @@ using ResurectPhone.Core.NokiaN9;
 
 namespace ResurectPhone.Infrastructure.Windows.NokiaN9;
 
-public sealed partial class N9SshConnectionService : IN9ConnectionService, IN9MaintenanceService, IN9KernelService
+public sealed partial class N9SshConnectionService : IN9ConnectionService, IN9MaintenanceService, IN9KernelService, IN9NetworkService
 {
     public const string DefaultUsbHost = "192.168.2.15";
     public const int DefaultPort = 22;
@@ -103,7 +103,7 @@ public sealed partial class N9SshConnectionService : IN9ConnectionService, IN9Ma
         var (privateKey, publicKey) = GeneratePairingKey();
         await InstallPublicKeyAsync(client, publicKey, cancellationToken);
         var pairing = new N9Pairing(
-            DefaultUsbHost,
+            client.ConnectionInfo.Host,
             DefaultPort,
             DefaultUserName,
             acceptedKey.Algorithm,
@@ -161,7 +161,7 @@ public sealed partial class N9SshConnectionService : IN9ConnectionService, IN9Ma
                 true,
                 false,
                 false,
-                "Le N9 est appairé, mais sa liaison développeur ne répond pas. Laissez SDK Connectivity ouvert et choisissez le mode USB SDK.");
+                "Le N9 est appairé, mais sa liaison développeur ne répond pas. Vérifiez SDK Connectivity et la connexion USB ou Wi-Fi.");
         }
     }
 
@@ -298,7 +298,7 @@ public sealed partial class N9SshConnectionService : IN9ConnectionService, IN9Ma
             true,
             harmattan,
             harmattan
-                ? "Le Nokia N9 répond par sa liaison développeur USB."
+                ? "Le Nokia N9 répond par sa liaison développeur."
                 : "Le serveur SSH répond, mais Harmattan n’a pas été confirmé.",
             client.ConnectionInfo.ServerVersion ?? string.Empty,
             client.ConnectionInfo.CurrentKeyExchangeAlgorithm ?? string.Empty);
@@ -407,7 +407,7 @@ public sealed partial class N9SshConnectionService : IN9ConnectionService, IN9Ma
         catch (Exception exception) when (IsConnectionFailure(exception))
         {
             throw new N9ConnectionException(
-                "La liaison développeur du Nokia N9 ne répond pas. Ouvrez SDK Connectivity et choisissez le mode USB SDK.",
+                "La liaison développeur du Nokia N9 ne répond pas. Vérifiez SDK Connectivity, le câble USB ou l’adresse Wi-Fi choisie.",
                 exception);
         }
     }

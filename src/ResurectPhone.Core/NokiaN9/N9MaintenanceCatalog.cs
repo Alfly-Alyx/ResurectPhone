@@ -22,7 +22,7 @@ public static class N9MaintenanceCatalog
     {
         "device.identity", "n9.firmware", "n9.repositories", "n9.dependencies", "n9.nokia-store",
         "n9.alternative-stores", "n9.package-backup", "n9.package-install",
-        "n9.internet", "n9.gps", "n9.account", "n9.cleanup",
+        "n9.networks", "n9.internet", "n9.gps", "n9.account", "n9.cleanup",
         "n9.devtools.debugging", "n9.devtools.networking", "n9.devtools.resources",
         "n9.devtools.power", "n9.devtools.performance", "n9.devtools.tracing",
         "n9.devtools.test-automation", "n9.devtools.utilities", "n9.devtools.logging"

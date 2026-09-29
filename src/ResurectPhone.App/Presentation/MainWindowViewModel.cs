@@ -80,6 +80,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             new("n9.developer-tools", "Nokia N9", "\uE943", "Outils développeur", "Les neuf ensembles d’outils installables à la demande.", RecoveryArea.DeveloperTools, N9Platforms),
             new("n9.firmware", "Nokia N9", "\uE950", "ROM et système", "ROM Harmattan PR1.3 et opérations système.", RecoveryArea.Firmware, N9Platforms),
             new("n9.stores", "Nokia N9", "\uE719", "Boutiques et applications", "Nokia Store, boutiques alternatives et mises à jour.", RecoveryArea.StoresAndApplications, N9Platforms),
+            new("n9.networks", "Nokia N9", "\uE701", "Réseaux et SDK", "Wi-Fi, reconnexion automatique et accès sans mot de passe.", RecoveryArea.Networks, N9Platforms),
             new("n9.internet", "Nokia N9", "\uE774", "Internet", "Certificats, chiffrement et navigation Web.", RecoveryArea.Internet, N9Platforms),
             new("n9.navigation", "Nokia N9", "\uE707", "GPS et cartes", "Localisation, Cartes et Drive.", RecoveryArea.Navigation, N9Platforms),
             new("n9.account", "Nokia N9", "\uE77B", "Compte Nokia", "Services de compte devenus indisponibles.", RecoveryArea.NokiaAccount, N9Platforms),
@@ -105,6 +106,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OpenWindowsPhoneCommand = new RelayCommand(() => OpenFamily(_windowsPhoneSections));
         OpenAndroidCommand = new RelayCommand(() => OpenFamily(_androidSections));
         ScanCommand = new AsyncRelayCommand(ScanAsync, () => !IsScanning);
+        ConnectN9WifiCommand = new AsyncRelayCommand(() => ConnectN9WifiAsync(), () => !IsConnectingN9);
         ConnectN9Command = new AsyncRelayCommand(() => ConnectN9Async(false), () => !IsConnectingN9);
         ForgetN9PairingCommand = new RelayCommand(ForgetN9Pairing, () => CanForgetN9Pairing);
         PrepareN9UsbCommand = new AsyncRelayCommand(PrepareN9UsbAsync, () => !IsConnectingN9);
@@ -127,6 +129,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public RelayCommand OpenAndroidCommand { get; }
     public AsyncRelayCommand ScanCommand { get; }
     public AsyncRelayCommand ConnectN9Command { get; }
+    public AsyncRelayCommand ConnectN9WifiCommand { get; }
     public RelayCommand ForgetN9PairingCommand { get; }
     public AsyncRelayCommand PrepareN9UsbCommand { get; }
     public RelayCommand ToggleAndroidMonitoringCommand { get; }
@@ -198,6 +201,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             {
                 OnPropertyChanged(nameof(N9ConnectionButtonText));
                 ConnectN9Command.RaiseCanExecuteChanged();
+                ConnectN9WifiCommand.RaiseCanExecuteChanged();
                 PrepareN9UsbCommand.RaiseCanExecuteChanged();
             }
         }
@@ -331,6 +335,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 stageStatus = TryStageN9Setup();
             if (n9 is null)
             {
+                if (_n9Connection.HasPairing && _n9Connection is IN9NetworkService { IsUsbTransport: false })
+                {
+                    if (DateTime.UtcNow - _lastN9AutoAttemptUtc > TimeSpan.FromSeconds(30))
+                    {
+                        _lastN9AutoAttemptUtc = DateTime.UtcNow;
+                        if (_n9Identified)
+                        {
+                            var status = await _n9Connection.GetStatusAsync();
+                            if (!status.IsReachable || !status.IsHarmattan)
+                            {
+                                _n9Identified = false;
+                                ConnectionTitle = "Nokia N9 déconnecté du Wi-Fi";
+                                ConnectionDetail = status.Detail;
+                                RefreshFeatures();
+                            }
+                        }
+                        else await ConnectN9WifiAsync(_n9Connection.SavedAddress, automatic: true);
+                    }
+                    return;
+                }
                 _n9Identified = false;
                 _n9PasswordPrompted = false;
                 _n9UsbPreparationAttempted = false;
@@ -360,7 +384,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 OpenFamily(_n9Sections);
             }
 
-            if (_n9Identified)
+            if (_n9Identified && _n9Connection is not IN9NetworkService { IsUsbTransport: false })
                 return;
 
             if (stageStatus is N9UsbSetupStageStatus.Conflict or N9UsbSetupStageStatus.Error)
@@ -435,6 +459,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return;
         }
 
+        if (IsN9Family && _n9Connection is IN9NetworkService { IsUsbTransport: false } && _n9Connection.SavedAddress is string saved)
+        {
+            await ConnectN9WifiAsync(saved);
+            return;
+        }
         IsScanning = true;
         ConnectionTitle = "Recherche du téléphone…";
         ConnectionDetail = "ResurectPhone consulte les appareils reconnus par Windows.";
@@ -556,7 +585,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             {
                 ConnectionTitle = "Connexion au Nokia N9…";
                 ConnectionDetail = "Vérification de la liaison développeur et de l’empreinte enregistrée.";
-                status = await _n9Connection.GetStatusAsync();
+                status = await _n9Connection.ConnectAtAddressAsync("192.168.2.15");
             }
             else
             {
@@ -651,6 +680,47 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         {
             IsConnectingN9 = false;
             OnPropertyChanged(nameof(N9ConnectionButtonText));
+            OnPropertyChanged(nameof(CanForgetN9Pairing));
+            ForgetN9PairingCommand.RaiseCanExecuteChanged();
+            RefreshFeatures();
+        }
+    }
+
+    private async Task ConnectN9WifiAsync(string? address = null, bool automatic = false)
+    {
+        address ??= _n9PairingInteraction.RequestWifiAddress(_n9Connection.SavedAddress is "192.168.2.15" ? null : _n9Connection.SavedAddress);
+        if (string.IsNullOrWhiteSpace(address)) return;
+        IsConnectingN9 = true;
+        try
+        {
+            ConnectionTitle = "Connexion au N9 par Wi-Fi…";
+            N9ConnectionStatus status;
+            try { status = await _n9Connection.ConnectAtAddressAsync(address, approveHostKey: _n9PairingInteraction.ConfirmHostKey); }
+            catch (N9AuthenticationRequiredException) when (!automatic)
+            {
+                var password = _n9PairingInteraction.RequestTemporaryPassword();
+                if (password is null) throw new N9ConnectionException("Connexion annulée.");
+                status = await _n9Connection.ConnectAtAddressAsync(address, password, _n9PairingInteraction.ConfirmHostKey);
+            }
+            if (!status.IsHarmattan || !status.IsReachable) throw new N9ConnectionException(status.Detail);
+            var details = await _n9Connection.ReadDeviceDetailsAsync();
+            _connectedPhone = new DetectedPhone("n9-sdk-wifi", string.IsNullOrWhiteSpace(details.ProductName) ? "Nokia N9" : details.ProductName,
+                PhonePlatform.MeeGoHarmattan, details.SystemName, details.SystemVersion, details.SystemBuild, details.ProductCode,
+                PhoneCapability.ReadIdentity | PhoneCapability.ReadFirmware);
+            _n9Identified = true;
+            if (IsHome) OpenFamily(_n9Sections);
+            ConnectionTitle = _connectedPhone.DisplayName + " — Wi-Fi";
+            ConnectionDetail = "Connecté à " + address + ". " + DescribeN9(_connectedPhone, details);
+        }
+        catch (Exception error)
+        {
+            _n9Identified = false;
+            ConnectionTitle = "Connexion Wi-Fi au N9 impossible";
+            ConnectionDetail = error.Message;
+        }
+        finally
+        {
+            IsConnectingN9 = false;
             OnPropertyChanged(nameof(CanForgetN9Pairing));
             ForgetN9PairingCommand.RaiseCanExecuteChanged();
             RefreshFeatures();

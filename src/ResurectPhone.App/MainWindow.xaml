@@ -366,7 +366,9 @@
                                            TextWrapping="Wrap"
                                            Foreground="{StaticResource MutedTextBrush}" />
                             </StackPanel>
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <WrapPanel Grid.Column="2" MaxWidth="480" VerticalAlignment="Center">
+                                <Button Content="Connexion Wi-Fi…" Command="{Binding ConnectN9WifiCommand}" Margin="0,0,8,8"
+                                        Visibility="{Binding IsN9Family, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 <Button Content="Préparer USB" Command="{Binding PrepareN9UsbCommand}"
                                         Margin="0,0,8,0"
                                         Visibility="{Binding IsN9Family, Converter={StaticResource BooleanToVisibilityConverter}}" />
@@ -378,7 +380,7 @@
                                         Style="{StaticResource PrimaryButton}" Margin="0,0,8,0"
                                         Visibility="{Binding IsN9Family, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 <Button Content="{Binding ScanButtonText}" Command="{Binding ScanCommand}" />
-                            </StackPanel>
+                            </WrapPanel>
                         </Grid>
                     </Border>
 

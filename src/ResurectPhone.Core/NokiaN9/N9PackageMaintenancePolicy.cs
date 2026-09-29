@@ -37,7 +37,7 @@ public static partial class N9PackageMaintenancePolicy
         DebianPackageNameRegex().IsMatch(packageName);
 
     public static bool IsProtectedPackage(N9DebPackageMetadata metadata) =>
-        metadata.Package.Equals(CompanionPackage, StringComparison.Ordinal) ||
+        (metadata.Package.Equals(CompanionPackage, StringComparison.Ordinal) || metadata.Package == "resurectphone-n9-network") ||
         metadata.Essential.Trim().Equals("yes", StringComparison.OrdinalIgnoreCase) ||
         metadata.Priority.Trim().Equals("required", StringComparison.OrdinalIgnoreCase) ||
         metadata.Priority.Trim().Equals("important", StringComparison.OrdinalIgnoreCase);
@@ -46,7 +46,7 @@ public static partial class N9PackageMaintenancePolicy
     {
         if (!IsSafePackageName(metadata.Package))
             return "L’identifiant du paquet est invalide.";
-        if (metadata.Package.Equals(CompanionPackage, StringComparison.Ordinal))
+        if ((metadata.Package.Equals(CompanionPackage, StringComparison.Ordinal) || metadata.Package == "resurectphone-n9-network"))
             return "Le compagnon ResurectPhone est nécessaire pour gérer le Nokia N9.";
         if (!metadata.IsUserVisible)
             return "Ce paquet n’a pas été identifié comme une application visible et ne peut pas être supprimé depuis ResurectPhone.";

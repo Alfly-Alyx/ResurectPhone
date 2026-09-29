@@ -7,6 +7,7 @@ namespace ResurectPhone.App.Presentation;
 public interface IN9PairingInteraction
 {
     string? RequestTemporaryPassword();
+    string? RequestWifiAddress(string? savedAddress);
 
     char[]? RequestAdministratorPassword();
 

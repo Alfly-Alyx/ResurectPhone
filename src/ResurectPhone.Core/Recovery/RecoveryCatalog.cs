@@ -107,6 +107,10 @@ public static class RecoveryCatalog
             RecoveryAvailability.Researching,
             PhoneCapability.InstallPackages),
         new(
+            "n9.networks", RecoveryArea.Networks, "Wi-Fi et accès SDK",
+            "Connecter les réseaux enregistrés, forcer leur reconnexion et choisir l’accès SDK sans mot de passe par USB ou Wi-Fi.",
+            N9, RecoveryRisk.ReversibleChange, RecoveryAvailability.Ready),
+        new(
             "n9.internet",
             RecoveryArea.Internet,
             "Navigation Internet",

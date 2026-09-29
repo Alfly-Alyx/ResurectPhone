@@ -46,7 +46,7 @@ public sealed partial class N9SshConnectionService
     {
         const string readiness = "test -f /var/lib/resurectphone/usb-enabled && " +
             "grep -q \"^# ResurectPhone USB access v4$\" /etc/ssh/sshd_config && " +
-            "dpkg -s resurectphone-n9 | grep -q \"^Version: 0[.]1[.]1$\" && " +
+            "dpkg -s resurectphone-n9 | grep -q \"^Version: 0[.]1[.]2$\" && " +
             "/sbin/initctl status resurectphone-usb-access | grep -q start/running";
         var ready = await ExecuteAdministratorAsync(client, readiness, password, cancellationToken);
         if (ready.Status == 0 && await CanConnectAnonymouslyAsync(pairing, cancellationToken))

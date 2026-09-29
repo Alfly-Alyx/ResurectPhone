@@ -12,8 +12,26 @@ public sealed class N9PairingInteraction(Func<Window?> ownerProvider) : IN9Pairi
 {
     public void ShowMaintenance(RecoveryFeature feature, IN9MaintenanceService service)
     {
-        var dialog = new N9MaintenanceDialog(feature, service, RequestAdministratorPassword) { Owner = ownerProvider() };
+        Window dialog = feature.Id == "n9.networks" && service is IN9NetworkService network
+            ? new N9NetworkDialog(network, service, RequestAdministratorPassword)
+            : new N9MaintenanceDialog(feature, service, RequestAdministratorPassword);
+        dialog.Owner = ownerProvider();
         dialog.ShowDialog();
+    }
+
+    public string? RequestWifiAddress(string? savedAddress)
+    {
+        var panel = new System.Windows.Controls.StackPanel { Margin = new Thickness(24) };
+        panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Adresse IPv4 affichée par SDK Connectivity en mode WLAN", TextWrapping = TextWrapping.Wrap });
+        var input = new System.Windows.Controls.TextBox { Text = savedAddress ?? "", Margin = new Thickness(0,12,0,12) };
+        panel.Children.Add(input);
+        var button = new System.Windows.Controls.Button { Content = "Connecter", IsDefault = true };
+        panel.Children.Add(button);
+        var dialog = new Window { Title = "Connecter le N9 par Wi-Fi", Width = 460, SizeToContent = SizeToContent.Height,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner, Content = panel, Owner = ownerProvider(), ShowInTaskbar = false };
+        button.Click += (_, _) => dialog.DialogResult = true;
+        dialog.Loaded += (_, _) => { input.Focus(); input.SelectAll(); };
+        return dialog.ShowDialog() == true ? input.Text.Trim() : null;
     }
 
     public string? RequestTemporaryPassword()

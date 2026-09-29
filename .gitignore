@@ -13,3 +13,6 @@ publish/
 *.exe
 *.log
 *.tmp
+
+__pycache__/
+*.pyc

@@ -105,3 +105,9 @@ de l’entrée restaurée, puis réapplication des réglages demandés.
 - [Recherche de noyaux et appairage USB](kernel-et-usb.md)
 
 Le N9 n’a reçu aucun autre noyau et n’a pas été flashé pendant ces essais.
+
+## Ajout réseau du 29 septembre 2026
+
+Une vingt-deuxième fiche, **Réseaux et SDK**, permet les réglages des profils Wi-Fi, la reconnexion forcée autonome et l’accès SDK sans mot de passe en USB ou USB et Wi-Fi. La connexion SSH par Wi-Fi est intégrée. Voir [les commandes, l’architecture et les essais restant sur le téléphone](reseaux-et-sdk.md).
+
+Les 93 tests .NET et 6 tests Python passent. L’état réseau a été lu sur le N9 ; les modifications n’ont pas encore été appliquées, car sa liaison Wi-Fi est devenue indisponible avant les essais et aucun USB N9 n’était présent.

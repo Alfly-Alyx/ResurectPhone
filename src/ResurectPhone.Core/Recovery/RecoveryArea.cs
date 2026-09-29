@@ -6,6 +6,7 @@ public enum RecoveryArea
     Firmware,
     StoresAndApplications,
     Internet,
+    Networks,
     Navigation,
     NokiaAccount,
     Cleanup,

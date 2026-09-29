@@ -1,5 +1,5 @@
 #!/bin/sh
-# ResurectPhone: persistent passwordless developer access on the N9 USB subnet.
+# ResurectPhone: persistent passwordless SDK access (USB, optionally Wi-Fi).
 set -eu
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 LC_ALL=C
@@ -9,6 +9,15 @@ test "$(id -u)" = 0 || { echo "Les droits administrateur du N9 sont nécessaires
 config=/etc/ssh/sshd_config
 sshd=/usr/sbin/sshd
 work=/var/lib/resurectphone
+# No argument preserves the selected scope during automatic USB preparation.
+scope=${1:-preserve}
+case "$scope" in
+    preserve) if [ -f "$work/wifi-sdk-enabled" ]; then scope=usb-wifi; else scope=usb; fi ;;
+    usb|usb-wifi) ;;
+    *) echo "Portee SDK inconnue." >&2; exit 1 ;;
+esac
+wifi_auth=no
+if [ "$scope" = usb-wifi ]; then wifi_auth=yes; fi
 test -f "$config"
 test -x "$sshd"
 command -v inotifywait >/dev/null 2>&1 || {
@@ -35,12 +44,14 @@ fi
 
 umask 077
 mkdir -p "$work/backups"
+chmod 755 "$work"
 backup="$work/backups/usb-$(date +%Y%m%d%H%M%S)-$$"
 mkdir "$backup"
 cp -p "$config" "$backup/sshd_config"
 cp -p /etc/passwd "$backup/passwd"
 if [ -f /etc/shadow ]; then cp -p /etc/shadow "$backup/shadow"; fi
 if [ -f "$work/usb-enabled" ]; then touch "$backup/was-enabled"; fi
+if [ -f "$work/wifi-sdk-enabled" ]; then touch "$backup/was-wifi-enabled"; fi
 
 cat > "$backup/restore.sh" <<'RESTORE'
 #!/bin/sh
@@ -50,7 +61,8 @@ export PATH
 cd "$(dirname "$0")"
 initctl stop resurectphone-usb-access >/dev/null 2>&1 || true
 cp -p ./sshd_config /etc/ssh/sshd_config
-rm -f /var/lib/resurectphone/usb-enabled
+rm -f /var/lib/resurectphone/usb-enabled /var/lib/resurectphone/wifi-sdk-enabled
+if [ -f ./was-wifi-enabled ]; then touch /var/lib/resurectphone/wifi-sdk-enabled; fi
 # Restore only developer's password, preserving changes to other accounts.
 restore_password() {
     awk -F: 'NR == FNR { if ($1 == "developer") password=$2; next }
@@ -85,6 +97,15 @@ if [ "$configured" = 0 ]; then
 else
     cp -p "$config" "$backup/sshd_config.new"
 fi
+# Rewrite only our managed non-USB block; keep all administrator rules intact.
+awk -v allow="$wifi_auth" '
+    /^# ResurectPhone USB access v4$/ { managed=1 }
+    managed && /^Match User developer Address \*,!192[.]168[.]2[.]0\/24$/ { wifi=1; print; next }
+    wifi && /^Match / { wifi=0 }
+    wifi && /^[[:space:]]*PasswordAuthentication / { print "    PasswordAuthentication " allow; next }
+    { print }
+' "$backup/sshd_config.new" > "$backup/sshd_config.scoped"
+mv "$backup/sshd_config.scoped" "$backup/sshd_config.new"
 
 cat > "$backup/watcher.new" <<'WATCHER'
 #!/bin/sh
@@ -129,7 +150,7 @@ JOB
 "$sshd" -T -f "$backup/sshd_config.new" -C user=developer,host=usb-client,addr=192.168.2.14 |
     grep -q '^passwordauthentication yes$'
 "$sshd" -T -f "$backup/sshd_config.new" -C user=developer,host=other-client,addr=192.168.3.14 |
-    grep -q '^passwordauthentication no$'
+    grep -q "^passwordauthentication $wifi_auth\$"
 sh -n "$backup/watcher.new"
 
 # Aegis protects /etc/init: package our own files with reference hashes.
@@ -143,7 +164,7 @@ chmod 755 "$backup/data" "$backup/data/usr" "$backup/data/usr/lib" \
     "$backup/data/usr/lib/resurectphone" "$backup/data/etc" "$backup/data/etc/init"
 cat > "$backup/control/control" <<'CONTROL'
 Package: resurectphone-n9
-Version: 0.1.1
+Version: 0.1.2
 Architecture: all
 Maintainer: ResurectPhone
 Priority: optional
@@ -190,6 +211,7 @@ initctl stop resurectphone-usb-access >/dev/null 2>&1 || true
 dpkg -i "$backup/resurectphone-n9.deb"
 cat "$backup/sshd_config.new" > "$config"
 touch "$work/usb-enabled"
+if [ "$scope" = usb-wifi ]; then touch "$work/wifi-sdk-enabled"; else rm -f "$work/wifi-sdk-enabled"; fi
 initctl reload-configuration
 initctl start resurectphone-usb-access
 passwd -d developer >/dev/null
@@ -200,4 +222,5 @@ initctl status resurectphone-usb-access | grep -q 'start/running'
 printf '%s\n' "$backup" > "$work/latest-usb-backup"
 finished=1
 printf 'RESURECTPHONE_BACKUP=%s\n' "$backup"
+printf 'RESURECTPHONE_SDK_SCOPE=%s\n' "$scope"
 echo 'RESURECTPHONE_USB_READY'
